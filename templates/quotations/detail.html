@@ -1,0 +1,13 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ quotation.quotation_number }} - Quotify{% endblock %}
+
+{% block content %}
+<h1>{{ quotation.quotation_number }}</h1>
+<p><strong>Cliente:</strong> {{ quotation.client.name }}</p>
+<p><strong>Notas:</strong> {{ quotation.notes|default:"Sin notas" }}</p>
+<p><strong>Estado:</strong> {{ quotation.get_status_display }}</p>
+<p><strong>Total:</strong> ${{ quotation.total_amount }}</p>
+<a href="{% url 'quotations:list' %}" class="btn btn-secondary">Volver</a>
+<a href="{% url 'quotations:update' quotation.pk %}" class="btn btn-warning">Editar</a>
+{% endblock %} 

@@ -1,0 +1,202 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Dashboard - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item active">Dashboard</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Dashboard</h1>
+    <a href="{% url 'quotations:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nueva Cotización
+    </a>
+</div>
+
+<!-- Estadísticas principales -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-file-text text-primary" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ total_quotations }}</h3>
+                <p class="text-muted mb-0">Cotizaciones</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-people text-success" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ total_clients }}</h3>
+                <p class="text-muted mb-0">Clientes</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-tools text-warning" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">{{ total_services }}</h3>
+                <p class="text-muted mb-0">Servicios</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="bi bi-currency-dollar text-info" style="font-size: 2rem;"></i>
+                <h3 class="mt-2">${{ total_value|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">Valor Total</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Estadísticas por estado -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Cotizaciones por Estado</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <span class="status-badge status-draft">{{ quotation_stats.draft }}</span>
+                        <p class="mt-2 mb-0 small">Borrador</p>
+                    </div>
+                    <div class="col">
+                        <span class="status-badge status-sent">{{ quotation_stats.sent }}</span>
+                        <p class="mt-2 mb-0 small">Enviadas</p>
+                    </div>
+                    <div class="col">
+                        <span class="status-badge status-accepted">{{ quotation_stats.accepted }}</span>
+                        <p class="mt-2 mb-0 small">Aceptadas</p>
+                    </div>
+                    <div class="col">
+                        <span class="status-badge status-rejected">{{ quotation_stats.rejected }}</span>
+                        <p class="mt-2 mb-0 small">Rechazadas</p>
+                    </div>
+                    <div class="col">
+                        <span class="status-badge status-expired">{{ quotation_stats.expired }}</span>
+                        <p class="mt-2 mb-0 small">Expiradas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actividad reciente -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Cotizaciones Recientes</h5>
+                <a href="{% url 'quotations:list' %}" class="btn btn-sm btn-outline-primary">Ver todas</a>
+            </div>
+            <div class="card-body">
+                {% if recent_quotations %}
+                    <div class="list-group list-group-flush">
+                        {% for quotation in recent_quotations %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <h6 class="mb-1">{{ quotation.quotation_number }}</h6>
+                                <p class="mb-1 text-muted small">{{ quotation.client.name }}</p>
+                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="status-badge status-{{ quotation.status|lower }}">
+                                    {{ quotation.get_status_display }}
+                                </span>
+                                <div class="small text-muted mt-1">
+                                    ${{ quotation.total_amount|floatformat:2 }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No hay cotizaciones recientes</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Clientes Recientes</h5>
+                <a href="{% url 'clients:list' %}" class="btn btn-sm btn-outline-primary">Ver todos</a>
+            </div>
+            <div class="card-body">
+                {% if recent_clients %}
+                    <div class="list-group list-group-flush">
+                        {% for client in recent_clients %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <h6 class="mb-1">{{ client.name }}</h6>
+                                <p class="mb-1 text-muted small">{{ client.email }}</p>
+                                <small class="text-muted">{{ client.created_at|date:"d/m/Y" }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-secondary">
+                                    {{ client.quotations.count }} cotizaciones
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No hay clientes recientes</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Acciones rápidas -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Acciones Rápidas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <a href="{% url 'quotations:create' %}" class="btn btn-outline-primary w-100 mb-2">
+                            <i class="bi bi-plus-circle"></i><br>
+                            Nueva Cotización
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'clients:create' %}" class="btn btn-outline-success w-100 mb-2">
+                            <i class="bi bi-person-plus"></i><br>
+                            Nuevo Cliente
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'services:create' %}" class="btn btn-outline-warning w-100 mb-2">
+                            <i class="bi bi-tools"></i><br>
+                            Nuevo Servicio
+                        </a>
+                    </div>
+                    <div class="col-md-3">
+                        <a href="{% url 'quotations:kanban' %}" class="btn btn-outline-info w-100 mb-2">
+                            <i class="bi bi-columns-gap"></i><br>
+                            Vista Kanban
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

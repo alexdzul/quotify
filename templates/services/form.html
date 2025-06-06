@@ -1,0 +1,195 @@
+{% extends 'base/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if object %}Editar Servicio{% else %}Nuevo Servicio{% endif %} - Quotify
+{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services:list' %}">Servicios</a></li>
+        <li class="breadcrumb-item active">
+            {% if object %}Editar{% else %}Nuevo{% endif %}
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        {% if object %}
+            <i class="bi bi-pencil"></i> Editar Servicio
+        {% else %}
+            <i class="bi bi-plus-circle"></i> Nuevo Servicio
+        {% endif %}
+    </h1>
+    <a href="{% url 'services:list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.name.id_for_label }}" class="form-label">
+                                    Nombre del Servicio <span class="text-danger">*</span>
+                                </label>
+                                {{ form.name|add_class:"form-control" }}
+                                {% if form.name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="{{ form.category.id_for_label }}" class="form-label">
+                                    Categoría <span class="text-danger">*</span>
+                                </label>
+                                {{ form.category|add_class:"form-select" }}
+                                {% if form.category.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.category.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Descripción</label>
+                        {{ form.description|add_class:"form-control" }}
+                        {% if form.description.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.description.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.unit.id_for_label }}" class="form-label">
+                                    Unidad <span class="text-danger">*</span>
+                                </label>
+                                {{ form.unit|add_class:"form-control" }}
+                                {% if form.unit.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.unit.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.base_price.id_for_label }}" class="form-label">
+                                    Precio Base <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    {{ form.base_price|add_class:"form-control" }}
+                                </div>
+                                {% if form.base_price.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.base_price.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="{{ form.tax_rate.id_for_label }}" class="form-label">IVA (%)</label>
+                                <div class="input-group">
+                                    {{ form.tax_rate|add_class:"form-control" }}
+                                    <span class="input-group-text">%</span>
+                                </div>
+                                {% if form.tax_rate.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.tax_rate.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.main_image.id_for_label }}" class="form-label">Imagen Principal</label>
+                        {{ form.main_image|add_class:"form-control" }}
+                        {% if form.main_image.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.main_image.errors.0 }}
+                            </div>
+                        {% endif %}
+                        {% if object and object.main_image %}
+                            <div class="mt-2">
+                                <img src="{{ object.main_image.url }}" alt="Vista previa" 
+                                     class="img-thumbnail" style="max-width: 200px;">
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i>
+                            {% if object %}Actualizar{% else %}Crear{% endif %} Servicio
+                        </button>
+                        <a href="{% url 'services:list' %}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Información</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    <i class="bi bi-info-circle"></i> Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+                </p>
+                <p class="small text-muted mb-2">
+                    <i class="bi bi-lightbulb"></i> El precio base se puede ajustar individualmente en cada cotización.
+                </p>
+                {% if object %}
+                <hr>
+                <p class="small text-muted mb-1">
+                    <strong>Creado:</strong> {{ object.created_at|date:"d/m/Y H:i" }}
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Actualizado:</strong> {{ object.updated_at|date:"d/m/Y H:i" }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Acciones Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'services:category_create' %}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nueva Categoría
+                </a>
+                <a href="{% url 'services:category_list' %}" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-tags"></i> Ver Categorías
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,468 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Vista Kanban - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quotations:list' %}">Cotizaciones</a></li>
+        <li class="breadcrumb-item active">Vista Kanban</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-columns-gap"></i> Vista Kanban
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'quotations:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-list"></i> Vista Lista
+        </a>
+        <a href="{% url 'quotations:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nueva Cotización
+        </a>
+    </div>
+</div>
+
+<div class="kanban-board">
+    <div class="row g-3">
+        <!-- Columna Borrador -->
+        <div class="col">
+            <div class="kanban-column">
+                <div class="kanban-header status-draft">
+                    <h6 class="mb-0">
+                        <i class="bi bi-file-earmark"></i> Borrador
+                        <span class="badge bg-dark ms-2">{{ draft_quotations.count }}</span>
+                    </h6>
+                </div>
+                <div class="kanban-body" data-status="draft">
+                    {% for quotation in draft_quotations %}
+                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                        <div class="card-header">
+                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'quotations:detail' quotation.pk %}">Ver</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:update' quotation.pk %}">Editar</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:duplicate' quotation.pk %}">Duplicar</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ quotation.client.name }}</h6>
+                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
+                                <strong class="text-primary">${{ quotation.total_amount|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-column">
+                        <i class="bi bi-file-earmark text-muted"></i>
+                        <p class="text-muted small">No hay borradores</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Enviadas -->
+        <div class="col">
+            <div class="kanban-column">
+                <div class="kanban-header status-sent">
+                    <h6 class="mb-0">
+                        <i class="bi bi-send"></i> Enviadas
+                        <span class="badge bg-dark ms-2">{{ sent_quotations.count }}</span>
+                    </h6>
+                </div>
+                <div class="kanban-body" data-status="sent">
+                    {% for quotation in sent_quotations %}
+                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                        <div class="card-header">
+                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'quotations:detail' quotation.pk %}">Ver</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:update' quotation.pk %}">Editar</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:duplicate' quotation.pk %}">Duplicar</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ quotation.client.name }}</h6>
+                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
+                                <strong class="text-info">${{ quotation.total_amount|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-column">
+                        <i class="bi bi-send text-muted"></i>
+                        <p class="text-muted small">No hay enviadas</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Aceptadas -->
+        <div class="col">
+            <div class="kanban-column">
+                <div class="kanban-header status-accepted">
+                    <h6 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Aceptadas
+                        <span class="badge bg-dark ms-2">{{ accepted_quotations.count }}</span>
+                    </h6>
+                </div>
+                <div class="kanban-body" data-status="accepted">
+                    {% for quotation in accepted_quotations %}
+                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                        <div class="card-header">
+                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'quotations:detail' quotation.pk %}">Ver</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:update' quotation.pk %}">Editar</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:duplicate' quotation.pk %}">Duplicar</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ quotation.client.name }}</h6>
+                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
+                                <strong class="text-success">${{ quotation.total_amount|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                                         {% empty %}
+                     <div class="empty-column">
+                         <i class="bi bi-check-circle text-muted"></i>
+                         <p class="text-muted small">No hay aceptadas</p>
+                     </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Rechazadas -->
+        <div class="col">
+            <div class="kanban-column">
+                <div class="kanban-header status-rejected">
+                    <h6 class="mb-0">
+                        <i class="bi bi-x-circle"></i> Rechazadas
+                        <span class="badge bg-dark ms-2">{{ rejected_quotations.count }}</span>
+                    </h6>
+                </div>
+                <div class="kanban-body" data-status="rejected">
+                    {% for quotation in rejected_quotations %}
+                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                        <div class="card-header">
+                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'quotations:detail' quotation.pk %}">Ver</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:update' quotation.pk %}">Editar</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:duplicate' quotation.pk %}">Duplicar</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ quotation.client.name }}</h6>
+                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
+                                <strong class="text-danger">${{ quotation.total_amount|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-column">
+                        <i class="bi bi-x-circle text-muted"></i>
+                        <p class="text-muted small">No hay rechazadas</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Columna Expiradas -->
+        <div class="col">
+            <div class="kanban-column">
+                <div class="kanban-header status-expired">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock"></i> Expiradas
+                        <span class="badge bg-dark ms-2">{{ expired_quotations.count }}</span>
+                    </h6>
+                </div>
+                <div class="kanban-body" data-status="expired">
+                    {% for quotation in expired_quotations %}
+                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                        <div class="card-header">
+                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{% url 'quotations:detail' quotation.pk %}">Ver</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:update' quotation.pk %}">Editar</a></li>
+                                    <li><a class="dropdown-item" href="{% url 'quotations:duplicate' quotation.pk %}">Duplicar</a></li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ quotation.client.name }}</h6>
+                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
+                                <strong class="text-warning">${{ quotation.total_amount|floatformat:2 }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                                         {% empty %}
+                     <div class="empty-column">
+                         <i class="bi bi-clock text-muted"></i>
+                         <p class="text-muted small">No hay expiradas</p>
+                     </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .kanban-board {
+        overflow-x: auto;
+        min-height: 70vh;
+    }
+    
+    .kanban-column {
+        background: #f8f9fa;
+        border-radius: 8px;
+        min-height: 600px;
+    }
+    
+    .kanban-header {
+        padding: 1rem;
+        border-radius: 8px 8px 0 0;
+        color: white;
+        font-weight: 500;
+    }
+    
+    .kanban-body {
+        padding: 1rem;
+        min-height: 500px;
+    }
+    
+    .kanban-card {
+        background: white;
+        border-radius: 6px;
+        margin-bottom: 0.75rem;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        cursor: move;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .kanban-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    
+    .kanban-card .card-header {
+        background: none;
+        border: none;
+        padding: 0.75rem 0.75rem 0;
+        display: flex;
+        justify-content: between;
+        align-items: center;
+    }
+    
+    .kanban-card .card-body {
+        padding: 0.5rem 0.75rem 0.75rem;
+    }
+    
+    .kanban-card .card-title {
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .empty-column {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #6c757d;
+    }
+    
+    .empty-column i {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .kanban-card.dragging {
+        opacity: 0.5;
+        transform: rotate(5deg);
+    }
+    
+    .kanban-body.drag-over {
+        background-color: #e3f2fd;
+        border: 2px dashed #2196f3;
+    }
+    
+    .text-purple {
+        color: #6f42c1 !important;
+    }
+    
+    @media (max-width: 768px) {
+        .kanban-board .row {
+            flex-wrap: nowrap;
+        }
+        
+        .kanban-board .col {
+            min-width: 280px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Drag and Drop functionality
+    const cards = document.querySelectorAll('.kanban-card');
+    const columns = document.querySelectorAll('.kanban-body');
+    
+    cards.forEach(card => {
+        card.addEventListener('dragstart', handleDragStart);
+        card.addEventListener('dragend', handleDragEnd);
+    });
+    
+    columns.forEach(column => {
+        column.addEventListener('dragover', handleDragOver);
+        column.addEventListener('drop', handleDrop);
+        column.addEventListener('dragenter', handleDragEnter);
+        column.addEventListener('dragleave', handleDragLeave);
+    });
+    
+    let draggedElement = null;
+    
+    function handleDragStart(e) {
+        draggedElement = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.outerHTML);
+    }
+    
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        draggedElement = null;
+    }
+    
+    function handleDragOver(e) {
+        if (e.preventDefault) {
+            e.preventDefault();
+        }
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+    
+    function handleDragEnter(e) {
+        this.classList.add('drag-over');
+    }
+    
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+    
+    function handleDrop(e) {
+        if (e.stopPropagation) {
+            e.stopPropagation();
+        }
+        
+        this.classList.remove('drag-over');
+        
+        if (draggedElement !== null) {
+            const quotationId = draggedElement.dataset.id;
+            const newStatus = this.dataset.status;
+            
+            // Mover visualmente la tarjeta
+            this.appendChild(draggedElement);
+            
+            // Actualizar en el servidor
+            updateQuotationStatus(quotationId, newStatus);
+        }
+        
+        return false;
+    }
+    
+    function updateQuotationStatus(quotationId, newStatus) {
+        fetch(`/quotations/${quotationId}/update-status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                status: newStatus
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Mostrar mensaje de éxito
+                showToast(data.message, 'success');
+            } else {
+                // Mostrar error y revertir
+                showToast(data.message, 'error');
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('Error al actualizar el estado', 'error');
+            location.reload();
+        });
+    }
+    
+    function showToast(message, type) {
+        // Crear toast simple
+        const toast = document.createElement('div');
+        toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} position-fixed`;
+        toast.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        toast.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+        `;
+        document.body.appendChild(toast);
+        
+        // Auto-remove after 3 seconds
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 3000);
+    }
+});
+</script>
+{% endblock %} 

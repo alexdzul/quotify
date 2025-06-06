@@ -1,0 +1,148 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ client.name }} - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'clients:list' %}">Clientes</a></li>
+        <li class="breadcrumb-item active">{{ client.name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-person"></i> {{ client.name }}
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'clients:update' client.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a href="{% url 'clients:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Información del Cliente</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong> {{ client.email|default:"No especificado" }}</p>
+                        <p><strong>Teléfono:</strong> {{ client.phone|default:"No especificado" }}</p>
+                        <p><strong>Ciudad:</strong> {{ client.city|default:"No especificado" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Estado:</strong> {{ client.state|default:"No especificado" }}</p>
+                        <p><strong>Código Postal:</strong> {{ client.postal_code|default:"No especificado" }}</p>
+                        <p><strong>Registrado:</strong> {{ client.created_at|date:"d/m/Y H:i" }}</p>
+                    </div>
+                </div>
+                {% if client.address %}
+                <p><strong>Dirección:</strong> {{ client.address }}</p>
+                {% endif %}
+                {% if client.notes %}
+                <p><strong>Notas:</strong> {{ client.notes }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Cotizaciones del cliente -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Cotizaciones</h5>
+                <a href="{% url 'quotations:create' %}?client={{ client.pk }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nueva Cotización
+                </a>
+            </div>
+            <div class="card-body">
+                {% if client.quotations.all %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Descripción</th>
+                                    <th>Estado</th>
+                                    <th>Total</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quotation in client.quotations.all %}
+                                <tr>
+                                    <td><strong>{{ quotation.quotation_number }}</strong></td>
+                                    <td>{{ quotation.description|truncatechars:50 }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ quotation.status|lower }}">
+                                            {{ quotation.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>${{ quotation.total_amount|floatformat:2 }}</td>
+                                    <td>{{ quotation.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'quotations:detail' quotation.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted text-center py-3">No hay cotizaciones para este cliente</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Estadísticas</h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <h3 class="text-primary">{{ client.quotations.count }}</h3>
+                    <p class="text-muted mb-0">Cotizaciones</p>
+                </div>
+                                 <div class="mb-3">
+                     <h3 class="text-success">$0.00</h3>
+                     <p class="text-muted mb-0">Valor Total</p>
+                 </div>
+                 <div class="mb-3">
+                     <h3 class="text-info">0</h3>
+                     <p class="text-muted mb-0">Aceptadas</p>
+                 </div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Acciones Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'quotations:create' %}?client={{ client.pk }}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nueva Cotización
+                </a>
+                <a href="{% url 'clients:update' client.pk %}" class="btn btn-outline-warning w-100 mb-2">
+                    <i class="bi bi-pencil"></i> Editar Cliente
+                </a>
+                <a href="mailto:{{ client.email }}" class="btn btn-outline-info w-100">
+                    <i class="bi bi-envelope"></i> Enviar Email
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

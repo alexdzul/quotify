@@ -1,0 +1,127 @@
+{% extends 'base/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if object %}Editar Cotización{% else %}Nueva Cotización{% endif %} - Quotify
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        {% if object %}
+            <i class="bi bi-pencil"></i> Editar Cotización
+        {% else %}
+            <i class="bi bi-plus-circle"></i> Nueva Cotización
+        {% endif %}
+    </h1>
+    <a href="{% url 'quotations:list' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.client.id_for_label }}" class="form-label">
+                            Cliente <span class="text-danger">*</span>
+                        </label>
+                        {{ form.client|add_class:"form-select" }}
+                        {% if form.client.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.client.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.expiration_date.id_for_label }}" class="form-label">
+                            Fecha de Expiración <span class="text-danger">*</span>
+                        </label>
+                        {{ form.expiration_date|add_class:"form-control" }}
+                        {% if form.expiration_date.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.expiration_date.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            <i class="bi bi-calendar"></i> Fecha límite para la validez de esta cotización
+                        </div>
+                    </div>
+                    
+                    {% if object %}
+                    <div class="mb-3">
+                        <label for="{{ form.status.id_for_label }}" class="form-label">Estado</label>
+                        {{ form.status|add_class:"form-select" }}
+                        {% if form.status.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.status.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.payment_terms.id_for_label }}" class="form-label">Términos de Pago</label>
+                        {{ form.payment_terms|add_class:"form-control" }}
+                        {% if form.payment_terms.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.payment_terms.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.notes.id_for_label }}" class="form-label">Notas</label>
+                        {{ form.notes|add_class:"form-control" }}
+                        {% if form.notes.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.notes.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i>
+                            {% if object %}Actualizar{% else %}Crear{% endif %} Cotización
+                        </button>
+                        <a href="{% url 'quotations:list' %}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Información</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    <i class="bi bi-info-circle"></i> Los campos marcados con <span class="text-danger">*</span> son obligatorios.
+                </p>
+                {% if object %}
+                <hr>
+                <p class="small text-muted mb-1">
+                    <strong>Número:</strong> {{ object.quotation_number }}
+                </p>
+                <p class="small text-muted mb-1">
+                    <strong>Creado:</strong> {{ object.created_at|date:"d/m/Y H:i" }}
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Total:</strong> ${{ object.total_amount|floatformat:2 }}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,10 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ service.name }} - Quotify{% endblock %}
+
+{% block content %}
+<h1>{{ service.name }}</h1>
+<p>{{ service.description }}</p>
+<p><strong>Precio:</strong> ${{ service.base_price }}</p>
+<a href="{% url 'services:list' %}" class="btn btn-secondary">Volver</a>
+{% endblock %} 

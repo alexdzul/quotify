@@ -1,0 +1,61 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Sesión Cerrada{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card">
+                <div class="card-header bg-success text-white text-center">
+                    <h4 class="mb-0">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Sesión Cerrada
+                    </h4>
+                </div>
+                <div class="card-body text-center">
+                    <div class="mb-4">
+                        <i class="bi bi-box-arrow-right text-success" style="font-size: 3rem;"></i>
+                    </div>
+                    <p class="lead">Has cerrado sesión exitosamente.</p>
+                    <p class="text-muted">Gracias por usar Quotify.</p>
+                    
+                    <div class="d-grid">
+                        <a href="{% url 'login' %}" class="btn btn-primary">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>
+                            Iniciar Sesión Nuevamente
+                        </a>
+                    </div>
+                </div>
+                <div class="card-footer text-center text-muted">
+                    <small>
+                        <i class="bi bi-shield-check me-1"></i>
+                        Tu sesión ha sido cerrada de forma segura
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    margin-top: 5rem;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+body {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    min-height: 100vh;
+}
+
+.container-fluid {
+    padding-top: 2rem;
+}
+</style>
+{% endblock %} 

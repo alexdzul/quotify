@@ -1,0 +1,131 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Servicios - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Servicios</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Servicios</h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'services:category_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-tags"></i> Categorías
+        </a>
+        <a href="{% url 'services:create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Servicio
+        </a>
+    </div>
+</div>
+
+{% if services %}
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Imagen</th>
+                        <th>Servicio</th>
+                        <th>Categoría</th>
+                        <th>Precio Base</th>
+                        <th>Unidad</th>
+                        <th>IVA</th>
+                        <th width="120">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for service in services %}
+                    <tr>
+                        <td>
+                            {% if service.main_image %}
+                                <img src="{{ service.main_image.url }}" alt="{{ service.name }}" 
+                                     class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                            {% else %}
+                                <div class="bg-light d-flex align-items-center justify-content-center" 
+                                     style="width: 50px; height: 50px; border-radius: 4px;">
+                                    <i class="bi bi-tools text-muted"></i>
+                                </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ service.name }}</strong>
+                            {% if service.description %}
+                                <br><small class="text-muted">{{ service.description|truncatechars:50 }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ service.category.name }}</span>
+                        </td>
+                        <td><strong>${{ service.base_price|floatformat:2 }}</strong></td>
+                        <td>{{ service.unit }}</td>
+                        <td>{{ service.tax_rate }}%</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'services:detail' service.pk %}" class="btn btn-outline-primary" title="Ver">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'services:update' service.pk %}" class="btn btn-outline-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'services:delete' service.pk %}" class="btn btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if is_paginated %}
+<nav aria-label="Paginación" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+            </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+        
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Última</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-tools text-muted" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 text-muted">No hay servicios registrados</h4>
+    <p class="text-muted">Comienza agregando tu primer servicio</p>
+    <a href="{% url 'services:create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Crear Primer Servicio
+    </a>
+</div>
+{% endif %}
+{% endblock %} 

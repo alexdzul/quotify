@@ -1,0 +1,6 @@
+Django>=5.2.2
+django-widget-tweaks==1.5.0
+Pillow>=10.0.0
+reportlab>=4.0.0
+weasyprint>=60.0
+pillow==11.2.1

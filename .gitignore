@@ -192,3 +192,12 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+real_quotes/*
+real_quotes
+
+# Ignorar archivos media. 
+media/*
+media
+
+# Visual Studio Code
+.vscode/
