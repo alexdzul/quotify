@@ -34,7 +34,7 @@
                         <th>Imagen</th>
                         <th>Servicio</th>
                         <th>Categoría</th>
-                        <th>Precio Base</th>
+                        <th>Precio Unitario</th>
                         <th>Unidad</th>
                         <th>IVA</th>
                         <th width="120">Acciones</th>
@@ -63,7 +63,7 @@
                         <td>
                             <span class="badge bg-secondary">{{ service.category.name }}</span>
                         </td>
-                        <td><strong>${{ service.base_price|floatformat:2 }}</strong></td>
+                        <td><strong>${{ service.unit_price|floatformat:2 }}</strong></td>
                         <td>{{ service.unit }}</td>
                         <td>{{ service.tax_rate }}%</td>
                         <td>
@@ -71,12 +71,22 @@
                                 <a href="{% url 'services:detail' service.pk %}" class="btn btn-outline-primary" title="Ver">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a href="{% url 'services:update' service.pk %}" class="btn btn-outline-warning" title="Editar">
-                                    <i class="bi bi-pencil"></i>
+                                <a href="{% url 'services:gallery' service.pk %}" class="btn btn-outline-info" title="Galería">
+                                    <i class="bi bi-images"></i>
                                 </a>
-                                <a href="{% url 'services:delete' service.pk %}" class="btn btn-outline-danger" title="Eliminar">
-                                    <i class="bi bi-trash"></i>
-                                </a>
+                                <button type="button" class="btn btn-outline-secondary dropdown-toggle dropdown-toggle-split" 
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                    <span class="visually-hidden">Toggle Dropdown</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="{% url 'services:update' service.pk %}">
+                                        <i class="bi bi-pencil"></i> Editar
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{% url 'services:delete' service.pk %}">
+                                        <i class="bi bi-trash"></i> Eliminar
+                                    </a></li>
+                                </ul>
                             </div>
                         </td>
                     </tr>

@@ -20,6 +20,54 @@ class QuotationListView(LoginRequiredMixin, ListView):
     context_object_name = 'quotations'
     paginate_by = 20
     ordering = ['-created_at']
+    
+    def get_queryset(self):
+        queryset = super().get_queryset().select_related('client')
+        
+        # Filtro por cliente
+        client_id = self.request.GET.get('client')
+        if client_id:
+            queryset = queryset.filter(client_id=client_id)
+        
+        # Filtro por estado
+        status = self.request.GET.get('status')
+        if status:
+            queryset = queryset.filter(status=status)
+        
+        # Búsqueda por texto (número de cotización o nombre de cliente)
+        search = self.request.GET.get('search')
+        if search:
+            queryset = queryset.filter(
+                Q(quotation_number__icontains=search) |
+                Q(client__name__icontains=search) |
+                Q(notes__icontains=search)
+            )
+        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Agregar listas para los filtros
+        context['clients'] = Client.objects.all().order_by('name')
+        context['status_choices'] = Quotation.STATUS_CHOICES
+        
+        # Mantener los valores de filtro actuales en el contexto
+        context['current_client'] = self.request.GET.get('client')
+        context['current_status'] = self.request.GET.get('status')
+        context['current_search'] = self.request.GET.get('search', '')
+        
+        # Agregar objetos actuales para mostrar en los filtros activos
+        if context['current_client']:
+            try:
+                context['current_client_obj'] = Client.objects.get(id=context['current_client'])
+            except Client.DoesNotExist:
+                context['current_client_obj'] = None
+        
+        if context['current_status']:
+            context['current_status_display'] = dict(Quotation.STATUS_CHOICES).get(context['current_status'])
+        
+        return context
 
 class QuotationKanbanView(LoginRequiredMixin, TemplateView):
     template_name = 'quotations/kanban.html'

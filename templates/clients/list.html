@@ -26,6 +26,7 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th width="60">Foto</th>
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>Teléfono</th>
@@ -38,6 +39,17 @@
                 <tbody>
                     {% for client in clients %}
                     <tr>
+                        <td>
+                            {% if client.photo %}
+                                <img src="{{ client.photo.url }}" alt="Foto de {{ client.name }}" 
+                                     class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person text-secondary"></i>
+                                </div>
+                            {% endif %}
+                        </td>
                         <td>
                             <strong>{{ client.name }}</strong>
                         </td>

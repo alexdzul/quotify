@@ -1,0 +1,240 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Galería - {{ service.name }} - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services:list' %}">Servicios</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services:detail' service.pk %}">{{ service.name }}</a></li>
+        <li class="breadcrumb-item active">Galería</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-images"></i> Galería - {{ service.name }}
+        </h1>
+        <p class="text-muted mb-0">{{ gallery_images|length }} imagen{{ gallery_images|length|pluralize:"es" }} en la galería</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'services:add_image' service.pk %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Agregar Imagen
+        </a>
+        <a href="{% url 'services:detail' service.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<!-- Información del servicio -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-2">
+                {% if service.main_image %}
+                    <img src="{{ service.main_image.url }}" alt="{{ service.name }}" 
+                         class="img-thumbnail" style="width: 80px; height: 80px; object-fit: cover;">
+                {% else %}
+                    <div class="bg-light d-flex align-items-center justify-content-center" 
+                         style="width: 80px; height: 80px; border-radius: 8px;">
+                        <i class="bi bi-tools text-muted fs-3"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="col-md-10">
+                <h5 class="mb-1">{{ service.name }}</h5>
+                <p class="text-muted mb-1">{{ service.description|truncatechars:100 }}</p>
+                <div class="d-flex gap-3">
+                    <small class="text-muted">
+                        <strong>Precio:</strong> ${{ service.unit_price|floatformat:2 }}/{{ service.unit }}
+                    </small>
+                    <small class="text-muted">
+                        <strong>Categoría:</strong> {{ service.category.name }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if gallery_images %}
+<!-- Galería de imágenes -->
+<div class="row" id="gallery">
+    {% for image in gallery_images %}
+    <div class="col-lg-3 col-md-4 col-sm-6 mb-4" id="image-{{ image.pk }}">
+        <div class="card">
+            <div class="position-relative">
+                <img src="{{ image.image.url }}" alt="{{ image.caption }}" 
+                     class="card-img-top" style="height: 200px; object-fit: cover; cursor: pointer;" 
+                     onclick="openImageModal('{{ image.image.url }}', '{{ image.caption|default:service.name }}')">
+                
+                <!-- Controles de orden -->
+                <div class="position-absolute top-0 start-0 m-1">
+                    <div class="btn-group-vertical btn-group-sm">
+                        <button type="button" class="btn btn-light btn-sm" 
+                                onclick="moveImage({{ image.pk }}, 'up')" title="Subir">
+                            <i class="bi bi-chevron-up"></i>
+                        </button>
+                        <button type="button" class="btn btn-light btn-sm" 
+                                onclick="moveImage({{ image.pk }}, 'down')" title="Bajar">
+                            <i class="bi bi-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Botón de eliminar -->
+                <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-2" 
+                        onclick="deleteImage({{ image.pk }})" title="Eliminar imagen">
+                    <i class="bi bi-trash"></i>
+                </button>
+                
+                <!-- Orden/Badge -->
+                <span class="badge bg-primary position-absolute bottom-0 start-0 m-2">{{ forloop.counter }}</span>
+            </div>
+            
+            {% if image.caption %}
+            <div class="card-body p-2">
+                <p class="card-text small text-muted mb-0">{{ image.caption }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Modal para visualizar imagen -->
+<div class="modal fade" id="imageModal" tabindex="-1" aria-labelledby="imageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalLabel">Vista de Imagen</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="" class="img-fluid">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<!-- Estado vacío -->
+<div class="text-center py-5">
+    <i class="bi bi-images text-muted" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 text-muted">No hay imágenes en la galería</h4>
+    <p class="text-muted">Comienza agregando imágenes para mostrar tu servicio</p>
+    <a href="{% url 'services:add_image' service.pk %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Agregar Primera Imagen
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-img-top:hover {
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    
+    .position-relative:hover .btn,
+    .position-relative:hover .btn-group-vertical {
+        opacity: 1;
+    }
+    
+    .position-absolute.btn,
+    .position-absolute .btn-group-vertical {
+        opacity: 0.8;
+        transition: opacity 0.2s;
+    }
+    
+    .btn-group-vertical .btn {
+        padding: 0.2rem 0.4rem;
+        font-size: 0.7rem;
+        border-radius: 2px;
+    }
+    
+    .modal-body img {
+        max-height: 70vh;
+        object-fit: contain;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function openImageModal(imageSrc, caption) {
+    document.getElementById('modalImage').src = imageSrc;
+    document.getElementById('imageModalLabel').textContent = caption;
+    new bootstrap.Modal(document.getElementById('imageModal')).show();
+}
+
+function deleteImage(imageId) {
+    if (confirm('¿Estás seguro de que quieres eliminar esta imagen?')) {
+        fetch(`{% url 'services:delete_image' service.pk 0 %}`.replace('0', imageId), {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Recargar la página para actualizar el orden
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error al eliminar la imagen');
+        });
+    }
+}
+
+function moveImage(imageId, direction) {
+    fetch(`{% url 'services:move_image' service.pk 0 %}`.replace('0', imageId), {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            direction: direction
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Recargar la página para mostrar el nuevo orden
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error al mover la imagen');
+    });
+}
+
+// Agregar CSRF token a las llamadas AJAX
+document.addEventListener('DOMContentLoaded', function() {
+    // Crear un input hidden con el CSRF token si no existe
+    if (!document.querySelector('[name=csrfmiddlewaretoken]')) {
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = '{{ csrf_token }}';
+        document.body.appendChild(csrfInput);
+    }
+});
+</script>
+{% endblock %} 

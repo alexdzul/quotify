@@ -35,19 +35,31 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6">
-                        <p><strong>Email:</strong> {{ client.email|default:"No especificado" }}</p>
-                        <p><strong>Teléfono:</strong> {{ client.phone|default:"No especificado" }}</p>
-                        <p><strong>Ciudad:</strong> {{ client.city|default:"No especificado" }}</p>
+                    {% if client.photo %}
+                    <div class="col-md-3 text-center mb-3">
+                        <img src="{{ client.photo.url }}" alt="Foto de {{ client.name }}" 
+                             class="img-thumbnail rounded-circle" style="width: 120px; height: 120px; object-fit: cover;">
                     </div>
-                    <div class="col-md-6">
-                        <p><strong>Estado:</strong> {{ client.state|default:"No especificado" }}</p>
-                        <p><strong>Código Postal:</strong> {{ client.postal_code|default:"No especificado" }}</p>
-                        <p><strong>Registrado:</strong> {{ client.created_at|date:"d/m/Y H:i" }}</p>
+                    <div class="col-md-9">
+                    {% else %}
+                    <div class="col-md-12">
+                    {% endif %}
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Email:</strong> {{ client.email|default:"No especificado" }}</p>
+                                <p><strong>Teléfono:</strong> {{ client.phone|default:"No especificado" }}</p>
+                                <p><strong>Ciudad:</strong> {{ client.city|default:"No especificado" }}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Estado:</strong> {{ client.state|default:"No especificado" }}</p>
+                                <p><strong>Código Postal:</strong> {{ client.postal_code|default:"No especificado" }}</p>
+                                <p><strong>Registrado:</strong> {{ client.created_at|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                {% if client.address %}
-                <p><strong>Dirección:</strong> {{ client.address }}</p>
+                {% if client.street %}
+                <p><strong>Dirección:</strong> {{ client.street }}</p>
                 {% endif %}
                 {% if client.notes %}
                 <p><strong>Notas:</strong> {{ client.notes }}</p>

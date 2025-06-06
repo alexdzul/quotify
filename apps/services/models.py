@@ -1,6 +1,7 @@
 from django.db import models
 from django.core.validators import MinValueValidator
 from decimal import Decimal
+from ordered_model.models import OrderedModel
 
 
 class ServiceCategory(models.Model):
@@ -106,7 +107,7 @@ class Service(models.Model):
         return subtotal * (self.tax_rate / Decimal('100'))
 
 
-class ServiceImage(models.Model):
+class ServiceImage(OrderedModel):
     """Additional images for services (gallery)"""
     
     service = models.ForeignKey(
@@ -125,17 +126,14 @@ class ServiceImage(models.Model):
         verbose_name="Descripcion",
         help_text="Descripcion opcional de la imagen"
     )
-    order = models.PositiveIntegerField(
-        default=0,
-        verbose_name="Orden",
-        help_text="Orden de aparición en la galería"
-    )
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # OrderedModel configuration
+    order_with_respect_to = 'service'
 
-    class Meta:
+    class Meta(OrderedModel.Meta):
         verbose_name = "Imagen de Servicio"
         verbose_name_plural = "Imagenes de Servicios"
-        ordering = ['order', 'created_at']
 
     def __str__(self):
         return f"{self.service.name} - Imagen {self.order}"

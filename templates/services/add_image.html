@@ -1,0 +1,220 @@
+{% extends 'base/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Agregar Imagen - {{ service.name }} - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services:list' %}">Servicios</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services:detail' service.pk %}">{{ service.name }}</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'services:gallery' service.pk %}">Galería</a></li>
+        <li class="breadcrumb-item active">Agregar Imagen</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-plus-circle"></i> Agregar Imagen a la Galería
+    </h1>
+    <a href="{% url 'services:gallery' service.pk %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Volver a Galería
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">{{ service.name }}</h5>
+                <p class="text-muted mb-0 small">Agregar nueva imagen a la galería</p>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="imageForm">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="{{ form.image.id_for_label }}" class="form-label">
+                            Imagen <span class="text-danger">*</span>
+                        </label>
+                        {{ form.image|add_class:"form-control" }}
+                        {% if form.image.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.image.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Formatos soportados: JPG, PNG, GIF. Tamaño máximo: 5MB.
+                        </div>
+                        
+                        <!-- Vista previa de la imagen -->
+                        <div id="imagePreview" class="mt-3" style="display: none;">
+                            <img id="previewImg" src="" alt="Vista previa" class="img-thumbnail" style="max-width: 300px;">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="{{ form.caption.id_for_label }}" class="form-label">Descripción</label>
+                        {{ form.caption|add_class:"form-control" }}
+                        {% if form.caption.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ form.caption.errors.0 }}
+                            </div>
+                        {% endif %}
+                        <div class="form-text">
+                            Descripción opcional de la imagen (por ejemplo: "Vista frontal", "Detalle del acabado", etc.)
+                        </div>
+                    </div>
+                    
+
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Agregar Imagen
+                        </button>
+                        <a href="{% url 'services:gallery' service.pk %}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Información del servicio -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Servicio</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    {% if service.main_image %}
+                        <img src="{{ service.main_image.url }}" alt="{{ service.name }}" 
+                             class="img-thumbnail me-3" style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-light d-flex align-items-center justify-content-center me-3" 
+                             style="width: 60px; height: 60px; border-radius: 8px;">
+                            <i class="bi bi-tools text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="mb-1">{{ service.name }}</h6>
+                        <small class="text-muted">{{ service.category.name }}</small>
+                    </div>
+                </div>
+                <p class="small text-muted mb-2">{{ service.description|truncatechars:100 }}</p>
+                <div class="small text-muted">
+                    <strong>Precio:</strong> ${{ service.unit_price|floatformat:2 }}/{{ service.unit }}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Consejos -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Consejos
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="small text-muted mb-0 ps-3">
+                    <li>Utiliza imágenes de alta calidad para mostrar mejor tu servicio</li>
+                    <li>Agrega descripciones claras para cada imagen</li>
+                    <li>Usa los botones ↑↓ en la galería para reordenar las imágenes</li>
+                    <li>Las imágenes se ordenan automáticamente</li>
+                    <li>Las imágenes se mostrarán en las cotizaciones cuando agregues este servicio</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Galería actual -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Galería Actual</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">{{ service.gallery_images.count }} imagen{{ service.gallery_images.count|pluralize:"es" }} en la galería</p>
+                <a href="{% url 'services:gallery' service.pk %}" class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-images"></i> Ver Galería Completa
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-control:focus {
+        border-color: var(--bs-primary);
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    #imagePreview img {
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+    }
+    
+    .card-header h6 {
+        color: var(--bs-primary);
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    
+    imageInput.addEventListener('change', function(event) {
+        const file = event.target.files[0];
+        
+        if (file) {
+            // Validar tipo de archivo
+            const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!validTypes.includes(file.type)) {
+                alert('Por favor, selecciona una imagen válida (JPG, PNG, GIF)');
+                imageInput.value = '';
+                imagePreview.style.display = 'none';
+                return;
+            }
+            
+            // Validar tamaño (5MB = 5 * 1024 * 1024 bytes)
+            if (file.size > 5 * 1024 * 1024) {
+                alert('La imagen es demasiado grande. El tamaño máximo es 5MB.');
+                imageInput.value = '';
+                imagePreview.style.display = 'none';
+                return;
+            }
+            
+            // Mostrar vista previa
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+        }
+    });
+    
+    // Validación del formulario
+    document.getElementById('imageForm').addEventListener('submit', function(event) {
+        const imageInput = document.getElementById('{{ form.image.id_for_label }}');
+        
+        if (!imageInput.files[0]) {
+            event.preventDefault();
+            alert('Por favor, selecciona una imagen para subir.');
+            imageInput.focus();
+        }
+    });
+});
+</script>
+{% endblock %} 

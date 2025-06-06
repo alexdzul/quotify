@@ -31,6 +31,13 @@ class Client(models.Model):
     
     # Additional information
     notes = models.TextField(blank=True, verbose_name="Notas")
+    photo = models.ImageField(
+        upload_to='clients/photos/', 
+        blank=True, 
+        null=True, 
+        verbose_name="Foto",
+        help_text="Foto del cliente (opcional)"
+    )
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
