@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Quotation, QuotationItem, QuotationItemImage, QuotationPhotographicReport
+from .models import Quotation, QuotationItem, QuotationItemImage, QuotationPhotographicReport, QuotationActivity
 
 
 class QuotationItemImageInline(admin.TabularInline):
@@ -394,3 +394,153 @@ class QuotationPhotographicReportAdmin(admin.ModelAdmin):
     def display_title(self, obj):
         return obj.display_title
     display_title.short_description = "Titulo"
+
+
+@admin.register(QuotationActivity)
+class QuotationActivityAdmin(admin.ModelAdmin):
+    list_display = [
+        'quotation',
+        'activity_type',
+        'title',
+        'user',
+        'get_priority_badge',
+        'get_status_badge',
+        'created_at'
+    ]
+    list_filter = [
+        'activity_type',
+        'priority',
+        'is_automatic',
+        'requires_follow_up',
+        'quotation__status',
+        'created_at'
+    ]
+    search_fields = [
+        'quotation__quotation_number',
+        'quotation__client__name',
+        'title',
+        'description',
+        'contact_person',
+        'contact_email'
+    ]
+    readonly_fields = [
+        'created_at',
+        'updated_at'
+    ]
+    
+    fieldsets = (
+        ('Información Básica', {
+            'fields': (
+                'quotation',
+                'activity_type',
+                'title',
+                'description'
+            )
+        }),
+        ('Estado y Cambios', {
+            'fields': (
+                'old_status',
+                'new_status'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Programación', {
+            'fields': (
+                'scheduled_date',
+                'completed_date',
+                'priority'
+            )
+        }),
+        ('Seguimiento', {
+            'fields': (
+                'requires_follow_up',
+                'follow_up_date'
+            )
+        }),
+        ('Información de Contacto', {
+            'fields': (
+                'contact_person',
+                'contact_email',
+                'contact_phone'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Sistema', {
+            'fields': (
+                'user',
+                'is_automatic',
+                'additional_data'
+            ),
+            'classes': ('collapse',)
+        }),
+        ('Fechas del Sistema', {
+            'fields': (
+                'created_at',
+                'updated_at'
+            ),
+            'classes': ('collapse',)
+        })
+    )
+    
+    # Pagination
+    list_per_page = 25
+    
+    # Actions
+    actions = ['mark_completed', 'add_follow_up', 'set_high_priority']
+    
+    def get_priority_badge(self, obj):
+        colors = {
+            'low': '#28a745',
+            'normal': '#6c757d',
+            'high': '#fd7e14',
+            'urgent': '#dc3545'
+        }
+        color = colors.get(obj.priority, '#6c757d')
+        return format_html(
+            '<span style="color: {}; font-weight: bold;">{}</span>',
+            color,
+            obj.get_priority_display()
+        )
+    get_priority_badge.short_description = "Prioridad"
+    
+    def get_status_badge(self, obj):
+        if obj.is_completed:
+            return format_html('<span style="color: #28a745; font-weight: bold;">✓ Completada</span>')
+        elif obj.is_overdue:
+            return format_html('<span style="color: #dc3545; font-weight: bold;">⚠ Vencida</span>')
+        elif obj.scheduled_date:
+            return format_html('<span style="color: #fd7e14; font-weight: bold;">⏰ Programada</span>')
+        elif obj.needs_follow_up:
+            return format_html('<span style="color: #007bff; font-weight: bold;">📝 Seguimiento</span>')
+        else:
+            return format_html('<span style="color: #6c757d;">📋 Registrada</span>')
+    get_status_badge.short_description = "Estado"
+    
+    # Custom actions
+    def mark_completed(self, request, queryset):
+        updated = 0
+        for activity in queryset:
+            if not activity.is_completed:
+                activity.mark_completed()
+                updated += 1
+        self.message_user(request, f'{updated} actividades marcadas como completadas.')
+    mark_completed.short_description = "Marcar como completadas"
+    
+    def add_follow_up(self, request, queryset):
+        from django.utils import timezone
+        from datetime import timedelta
+        
+        follow_up_date = timezone.now() + timedelta(days=7)
+        updated = queryset.update(
+            requires_follow_up=True,
+            follow_up_date=follow_up_date
+        )
+        self.message_user(request, f'{updated} actividades configuradas para seguimiento en 7 días.')
+    add_follow_up.short_description = "Agregar seguimiento en 7 días"
+    
+    def set_high_priority(self, request, queryset):
+        updated = queryset.update(priority='high')
+        self.message_user(request, f'{updated} actividades marcadas como alta prioridad.')
+    set_high_priority.short_description = "Marcar como alta prioridad"
+
+

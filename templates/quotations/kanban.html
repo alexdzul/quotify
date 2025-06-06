@@ -354,6 +354,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const cards = document.querySelectorAll('.kanban-card');
     const columns = document.querySelectorAll('.kanban-body');
     
+    // Inicializar estado de columnas vacías
+    columns.forEach(checkEmptyColumn);
+    
     cards.forEach(card => {
         card.addEventListener('dragstart', handleDragStart);
         card.addEventListener('dragend', handleDragEnd);
@@ -407,14 +410,80 @@ document.addEventListener('DOMContentLoaded', function() {
             const quotationId = draggedElement.dataset.id;
             const newStatus = this.dataset.status;
             
+            // Guardar referencia a la columna de origen ANTES de mover
+            const sourceColumn = draggedElement.parentElement;
+            
+            // Ocultar mensaje de columna vacía en destino
+            const emptyMessage = this.querySelector('.empty-column');
+            if (emptyMessage) {
+                emptyMessage.style.display = 'none';
+            }
+            
             // Mover visualmente la tarjeta
             this.appendChild(draggedElement);
+            
+            // Verificar si la columna de origen queda vacía
+            checkEmptyColumn(sourceColumn);
             
             // Actualizar en el servidor
             updateQuotationStatus(quotationId, newStatus);
         }
         
         return false;
+    }
+    
+    function checkEmptyColumn(column) {
+        const cards = column.querySelectorAll('.kanban-card');
+        let emptyMessage = column.querySelector('.empty-column');
+        
+        if (cards.length === 0) {
+            // Si no hay tarjetas, mostrar mensaje de columna vacía
+            if (!emptyMessage) {
+                // Crear el mensaje si no existe
+                emptyMessage = createEmptyMessage(column);
+                column.appendChild(emptyMessage);
+            }
+            emptyMessage.style.display = 'block';
+        } else {
+            // Si hay tarjetas, ocultar mensaje de columna vacía
+            if (emptyMessage) {
+                emptyMessage.style.display = 'none';
+            }
+        }
+        
+        // Actualizar contador en la cabecera
+        updateColumnCounter(column);
+    }
+    
+    function createEmptyMessage(column) {
+        const status = column.dataset.status;
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'empty-column';
+        
+        const statusConfig = {
+            'draft': { icon: 'bi-file-earmark', text: 'No hay borradores' },
+            'sent': { icon: 'bi-send', text: 'No hay enviadas' },
+            'accepted': { icon: 'bi-check-circle', text: 'No hay aceptadas' },
+            'rejected': { icon: 'bi-x-circle', text: 'No hay rechazadas' },
+            'expired': { icon: 'bi-clock', text: 'No hay expiradas' }
+        };
+        
+        const config = statusConfig[status] || { icon: 'bi-file-earmark', text: 'No hay elementos' };
+        
+        emptyDiv.innerHTML = `
+            <i class="bi ${config.icon} text-muted"></i>
+            <p class="text-muted small">${config.text}</p>
+        `;
+        
+        return emptyDiv;
+    }
+    
+    function updateColumnCounter(column) {
+        const cards = column.querySelectorAll('.kanban-card');
+        const badge = column.closest('.kanban-column').querySelector('.badge');
+        if (badge) {
+            badge.textContent = cards.length;
+        }
     }
     
     function updateQuotationStatus(quotationId, newStatus) {
@@ -432,6 +501,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (data.success) {
                 // Mostrar mensaje de éxito
                 showToast(data.message, 'success');
+                
+                // Verificar mensajes de columnas vacías después de actualizar
+                columns.forEach(checkEmptyColumn);
             } else {
                 // Mostrar error y revertir
                 showToast(data.message, 'error');

@@ -2,12 +2,490 @@
 
 {% block title %}{{ quotation.quotation_number }} - Quotify{% endblock %}
 
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quotations:list' %}">Cotizaciones</a></li>
+        <li class="breadcrumb-item active">{{ quotation.quotation_number }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
 {% block content %}
-<h1>{{ quotation.quotation_number }}</h1>
-<p><strong>Cliente:</strong> {{ quotation.client.name }}</p>
-<p><strong>Notas:</strong> {{ quotation.notes|default:"Sin notas" }}</p>
-<p><strong>Estado:</strong> {{ quotation.get_status_display }}</p>
-<p><strong>Total:</strong> ${{ quotation.total_amount }}</p>
-<a href="{% url 'quotations:list' %}" class="btn btn-secondary">Volver</a>
-<a href="{% url 'quotations:update' quotation.pk %}" class="btn btn-warning">Editar</a>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-file-earmark-text"></i> {{ quotation.quotation_number }}
+            {% if quotation.status == 'accepted' %}
+                <span class="badge bg-success ms-2">{{ quotation.get_status_display }}</span>
+            {% elif quotation.status == 'sent' %}
+                <span class="badge bg-primary ms-2">{{ quotation.get_status_display }}</span>
+            {% elif quotation.status == 'rejected' %}
+                <span class="badge bg-danger ms-2">{{ quotation.get_status_display }}</span>
+            {% elif quotation.status == 'expired' %}
+                <span class="badge bg-warning ms-2">{{ quotation.get_status_display }}</span>
+            {% else %}
+                <span class="badge bg-secondary ms-2">{{ quotation.get_status_display }}</span>
+            {% endif %}
+        </h1>
+        <p class="text-muted mb-0">{{ quotation.client.name }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'quotations:update' quotation.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a href="{% url 'quotations:duplicate' quotation.pk %}" class="btn btn-info">
+            <i class="bi bi-files"></i> Duplicar
+        </a>
+        <a href="{% url 'quotations:list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Información de la Cotización -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información de la Cotización</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Cliente:</strong> {{ quotation.client.name }}</p>
+                        <p><strong>Email:</strong> {{ quotation.client.email|default:"No especificado" }}</p>
+                        <p><strong>Teléfono:</strong> {{ quotation.client.phone|default:"No especificado" }}</p>
+                        <p><strong>Vendedor:</strong> {{ quotation.salesperson|default:"No asignado" }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Fecha de Cotización:</strong> {{ quotation.quotation_date|date:"d/m/Y" }}</p>
+                        <p><strong>Fecha de Expiración:</strong> {{ quotation.expiration_date|date:"d/m/Y" }}</p>
+                        <p><strong>Estado:</strong> {{ quotation.get_status_display }}</p>
+                        <p><strong>Total:</strong> <span class="h5 text-primary">${{ quotation.total_amount|floatformat:2 }}</span></p>
+                    </div>
+                </div>
+                {% if quotation.notes %}
+                <div class="mt-3">
+                    <strong>Notas:</strong>
+                    <p class="text-muted">{{ quotation.notes|linebreaks }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Servicios/Items de la Cotización -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-list-check"></i> Servicios ({{ quotation.items.count }})
+                </h5>
+                <a href="{% url 'quotations:item_create' quotation.pk %}" class="btn btn-success btn-sm">
+                    <i class="bi bi-plus"></i> Agregar Servicio
+                </a>
+            </div>
+            <div class="card-body">
+                {% if quotation.items.exists %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Servicio</th>
+                                    <th>Cantidad</th>
+                                    <th class="text-end">Precio Unit.</th>
+                                    <th class="text-end">Subtotal</th>
+                                    <th class="text-end">Impuestos</th>
+                                    <th class="text-end">Total</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in quotation.items.all %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.display_image %}
+                                            <img src="{{ item.display_image.url }}" alt="{{ item.service.name }}" 
+                                                 class="me-3 rounded" style="width: 50px; height: 50px; object-fit: cover;">
+                                            {% endif %}
+                                            <div>
+                                                <strong>{{ item.service.name }}</strong>
+                                                {% if item.description %}
+                                                    <br><small class="text-muted">{{ item.description|truncatechars:50 }}</small>
+                                                {% else %}
+                                                    <br><small class="text-muted">{{ item.service.description|truncatechars:50 }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {{ item.quantity|floatformat:2 }}
+                                        <small class="text-muted">{{ item.service.unit }}</small>
+                                    </td>
+                                    <td class="text-end">${{ item.unit_price|floatformat:2 }}</td>
+                                    <td class="text-end">${{ item.subtotal|floatformat:2 }}</td>
+                                    <td class="text-end">
+                                        ${{ item.tax_amount|floatformat:2 }}
+                                        <br><small class="text-muted">({{ item.tax_rate }}%)</small>
+                                    </td>
+                                    <td class="text-end">
+                                        <strong class="text-success">${{ item.total_amount|floatformat:2 }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="dropdown">
+                                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                                    type="button" data-bs-toggle="dropdown">
+                                                <i class="bi bi-three-dots"></i>
+                                            </button>
+                                            <ul class="dropdown-menu">
+                                                <li>
+                                                    <a class="dropdown-item" href="{% url 'quotations:item_update' item.pk %}">
+                                                        <i class="bi bi-pencil"></i> Editar
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item text-danger" href="{% url 'quotations:item_delete' item.pk %}">
+                                                        <i class="bi bi-trash"></i> Eliminar
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-light">
+                                <tr>
+                                    <th colspan="3" class="text-end">Subtotal:</th>
+                                    <th class="text-end">${{ quotation.subtotal|floatformat:2 }}</th>
+                                    <th class="text-end">${{ quotation.tax_amount|floatformat:2 }}</th>
+                                    <th class="text-end text-success">
+                                        <strong>${{ quotation.total_amount|floatformat:2 }}</strong>
+                                    </th>
+                                    <th></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                    
+                    <!-- Resumen de Pagos -->
+                    <div class="row mt-4">
+                        <div class="col-md-6 offset-md-6">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Resumen de Pagos</h6>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Anticipo (60%):</span>
+                                        <strong class="text-success">${{ quotation.get_advance_payment|floatformat:2 }}</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Saldo (40%):</span>
+                                        <strong class="text-info">${{ quotation.get_balance_payment|floatformat:2 }}</strong>
+                                    </div>
+                                    <hr>
+                                    <div class="d-flex justify-content-between">
+                                        <strong>Total:</strong>
+                                        <strong class="text-primary">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-box text-muted" style="font-size: 3rem;"></i>
+                        <h6 class="text-muted mt-2">No hay servicios agregados</h6>
+                        <p class="text-muted small">Comienza agregando servicios a esta cotización</p>
+                        <a href="{% url 'quotations:item_create' quotation.pk %}" class="btn btn-success">
+                            <i class="bi bi-plus-circle"></i> Agregar Primer Servicio
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Historial de Actividades -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-clock-history"></i> Historial de Actividades
+                </h5>
+                <div class="dropdown">
+                    <button class="btn btn-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-plus"></i> Nueva Actividad
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#" onclick="addQuickNote()">
+                            <i class="bi bi-sticky"></i> Nota Rápida
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="logCall()">
+                            <i class="bi bi-telephone"></i> Registrar Llamada
+                        </a></li>
+                        <li><a class="dropdown-item" href="#" onclick="scheduleFollowUp()">
+                            <i class="bi bi-calendar-event"></i> Programar Seguimiento
+                        </a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                {% if activities %}
+                <div class="timeline">
+                    {% for activity in activities %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker">
+                            {% if activity.activity_type == 'status_change' %}
+                                <i class="bi bi-arrow-right-circle text-primary"></i>
+                            {% elif activity.activity_type == 'note' %}
+                                <i class="bi bi-sticky text-warning"></i>
+                            {% elif activity.activity_type == 'call_made' or activity.activity_type == 'call_received' %}
+                                <i class="bi bi-telephone text-success"></i>
+                            {% elif activity.activity_type == 'email_sent' or activity.activity_type == 'email_received' %}
+                                <i class="bi bi-envelope text-info"></i>
+                            {% else %}
+                                <i class="bi bi-circle text-secondary"></i>
+                            {% endif %}
+                        </div>
+                        <div class="timeline-content">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ activity.title }}</h6>
+                                    <p class="text-muted small mb-1">{{ activity.description|truncatechars:100 }}</p>
+                                    <div class="small text-muted">
+                                        <i class="bi bi-person"></i> {{ activity.user.get_full_name|default:activity.user.username }}
+                                        <span class="mx-2">•</span>
+                                        <i class="bi bi-clock"></i> {{ activity.created_at|date:"d/m/Y H:i" }}
+                                        {% if activity.priority != 'normal' %}
+                                            <span class="mx-2">•</span>
+                                            {% if activity.priority == 'high' %}
+                                                <span class="badge bg-warning">Alta</span>
+                                            {% elif activity.priority == 'urgent' %}
+                                                <span class="badge bg-danger">Urgente</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if activity.contact_person or activity.contact_email or activity.contact_phone %}
+                            <div class="mt-2 p-2 bg-light rounded">
+                                <small class="text-muted">
+                                    <strong>Contacto:</strong>
+                                    {% if activity.contact_person %}{{ activity.contact_person }}{% endif %}
+                                    {% if activity.contact_email %} - {{ activity.contact_email }}{% endif %}
+                                    {% if activity.contact_phone %} - {{ activity.contact_phone }}{% endif %}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-clock-history text-muted" style="font-size: 3rem;"></i>
+                    <h6 class="text-muted mt-2">No hay actividades registradas</h6>
+                    <p class="text-muted small">Comienza registrando una nota, llamada o reunión</p>
+                    <button class="btn btn-primary" onclick="addQuickNote()">
+                        <i class="bi bi-plus-circle"></i> Primera Actividad
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Acciones Rápidas -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Acciones Rápidas</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success" onclick="addQuickNote()">
+                        <i class="bi bi-sticky"></i> Agregar Nota Rápida
+                    </button>
+                    <button class="btn btn-info" onclick="logCall()">
+                        <i class="bi bi-telephone"></i> Registrar Llamada
+                    </button>
+                    <button class="btn btn-warning" onclick="scheduleFollowUp()">
+                        <i class="bi bi-calendar-plus"></i> Programar Seguimiento
+                    </button>
+                    {% if quotation.client.email %}
+                    <a href="mailto:{{ quotation.client.email }}" class="btn btn-outline-primary">
+                        <i class="bi bi-envelope"></i> Enviar Email
+                    </a>
+                    {% endif %}
+                    {% if quotation.client.phone %}
+                    <a href="tel:{{ quotation.client.phone }}" class="btn btn-outline-success">
+                        <i class="bi bi-telephone"></i> Llamar Cliente
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Información del Cliente -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Información del Cliente</h6>
+            </div>
+            <div class="card-body">
+                <h6>{{ quotation.client.name }}</h6>
+                {% if quotation.client.email %}
+                <p class="small mb-1">
+                    <i class="bi bi-envelope"></i> {{ quotation.client.email }}
+                </p>
+                {% endif %}
+                {% if quotation.client.phone %}
+                <p class="small mb-1">
+                    <i class="bi bi-telephone"></i> {{ quotation.client.phone }}
+                </p>
+                {% endif %}
+                <div class="mt-3">
+                    <small class="text-muted">
+                        Cliente desde: {{ quotation.client.created_at|date:"d/m/Y" }}
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Nota Rápida -->
+<div class="modal fade" id="quickNoteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Agregar Nota Rápida</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="post" action="{% url 'quotations:activity_create' quotation.pk %}">
+                {% csrf_token %}
+                <input type="hidden" name="activity_type" value="note">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="noteTitle" class="form-label">Título</label>
+                        <input type="text" class="form-control" name="title" id="noteTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="noteDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" name="description" id="noteDescription" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notePriority" class="form-label">Prioridad</label>
+                        <select class="form-select" name="priority" id="notePriority">
+                            <option value="normal">Normal</option>
+                            <option value="high">Alta</option>
+                            <option value="urgent">Urgente</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Nota</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 1rem;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -2rem;
+        top: 0.25rem;
+        width: 2rem;
+        height: 2rem;
+        background: white;
+        border: 2px solid #dee2e6;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.875rem;
+    }
+    
+    .timeline-content {
+        background: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border-left: 3px solid #007bff;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function addQuickNote() {
+    const modal = new bootstrap.Modal(document.getElementById('quickNoteModal'));
+    modal.show();
+}
+
+function logCall() {
+    // Crear formulario dinámico para llamada
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "quotations:activity_create" quotation.pk %}';
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    form.innerHTML = `
+        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+        <input type="hidden" name="activity_type" value="call_made">
+        <input type="hidden" name="title" value="Llamada realizada">
+        <input type="hidden" name="description" value="Llamada realizada al cliente">
+        <input type="hidden" name="contact_person" value="{{ quotation.client.name }}">
+        <input type="hidden" name="contact_phone" value="{{ quotation.client.phone|default:'' }}">
+    `;
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+
+function scheduleFollowUp() {
+    // Crear formulario dinámico para seguimiento
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '{% url "quotations:activity_create" quotation.pk %}';
+    
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const followUpDate = new Date();
+    followUpDate.setDate(followUpDate.getDate() + 7); // 7 días después
+    
+    form.innerHTML = `
+        <input type="hidden" name="csrfmiddlewaretoken" value="${csrfToken}">
+        <input type="hidden" name="activity_type" value="follow_up">
+        <input type="hidden" name="title" value="Seguimiento programado">
+        <input type="hidden" name="description" value="Seguimiento programado para revisar el estado de la cotización">
+        <input type="hidden" name="requires_follow_up" value="true">
+        <input type="hidden" name="follow_up_date" value="${followUpDate.toISOString().slice(0, 16)}">
+    `;
+    
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 {% endblock %} 

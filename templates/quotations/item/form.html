@@ -1,0 +1,118 @@
+{% extends "base/base.html" %}
+
+{% block title %}
+{% if object %}
+Editar Servicio - {{ quotation.quotation_number }}
+{% else %}
+Agregar Servicio - {{ quotation.quotation_number }}
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<h2>
+    {% if object %}
+        <i class="bi bi-pencil text-primary"></i> Editar Servicio
+    {% else %}
+        <i class="bi bi-plus text-success"></i> Agregar Servicio
+    {% endif %}
+</h2>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="bi bi-gear"></i> Información del Servicio</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Cotización:</strong> {{ quotation.quotation_number }} - {{ quotation.client.name }}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_service" class="form-label">
+                            <i class="bi bi-tools"></i> Servicio <span class="text-danger">*</span>
+                        </label>
+                        {{ form.service }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_quantity" class="form-label">
+                                <i class="bi bi-123"></i> Cantidad <span class="text-danger">*</span>
+                            </label>
+                            {{ form.quantity }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_unit_price" class="form-label">
+                                <i class="bi bi-currency-dollar"></i> Precio Unitario <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                {{ form.unit_price }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_tax_rate" class="form-label">
+                                <i class="bi bi-percent"></i> Tasa de Impuesto (%) <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                {{ form.tax_rate }}
+                                <span class="input-group-text">%</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_custom_image" class="form-label">
+                                <i class="bi bi-image"></i> Imagen Personalizada
+                            </label>
+                            {{ form.custom_image }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">
+                            <i class="bi bi-chat-left-text"></i> Descripción Personalizada
+                        </label>
+                        {{ form.description }}
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{% url 'quotations:detail' quotation.pk %}" class="btn btn-secondary">
+                            <i class="bi bi-x"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check"></i>
+                            {% if object %}Actualizar{% else %}Agregar{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h6><i class="bi bi-file-text"></i> Información de la Cotización</h6>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <strong>Número:</strong> {{ quotation.quotation_number }}
+                </div>
+                <div class="mb-3">
+                    <strong>Cliente:</strong> {{ quotation.client.name }}
+                </div>
+                <div class="mb-3">
+                    <strong>Total:</strong> ${{ quotation.total_amount|floatformat:2 }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -427,3 +427,252 @@ class QuotationItemImage(models.Model):
 
     def __str__(self):
         return f"{self.quotation_item} - Imagen {self.order}"
+
+
+class QuotationActivity(models.Model):
+    """Track all activities and changes for quotations (CRM-like functionality)"""
+    
+    ACTIVITY_TYPE_CHOICES = [
+        # Automatic system events
+        ('status_change', 'Cambio de Estado'),
+        ('created', 'Cotización Creada'),
+        ('updated', 'Cotización Actualizada'),
+        ('item_added', 'Servicio Agregado'),
+        ('item_removed', 'Servicio Eliminado'),
+        ('item_updated', 'Servicio Modificado'),
+        
+        # Manual activities (CRM-like)
+        ('note', 'Nota'),
+        ('call_made', 'Llamada Realizada'),
+        ('call_received', 'Llamada Recibida'),
+        ('email_sent', 'Email Enviado'),
+        ('email_received', 'Email Recibido'),
+        ('meeting_scheduled', 'Reunión Programada'),
+        ('meeting_completed', 'Reunión Realizada'),
+        ('document_sent', 'Documento Enviado'),
+        ('payment_received', 'Pago Recibido'),
+        ('visit_scheduled', 'Visita Programada'),
+        ('visit_completed', 'Visita Realizada'),
+        ('follow_up', 'Seguimiento'),
+        ('reminder', 'Recordatorio'),
+        ('other', 'Otro'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', 'Baja'),
+        ('normal', 'Normal'),
+        ('high', 'Alta'),
+        ('urgent', 'Urgente'),
+    ]
+    
+    quotation = models.ForeignKey(
+        Quotation,
+        on_delete=models.CASCADE,
+        related_name='activities',
+        verbose_name="Cotización"
+    )
+    
+    activity_type = models.CharField(
+        max_length=30,
+        choices=ACTIVITY_TYPE_CHOICES,
+        verbose_name="Tipo de Actividad"
+    )
+    
+    title = models.CharField(
+        max_length=200,
+        verbose_name="Título",
+        help_text="Título breve de la actividad"
+    )
+    
+    description = models.TextField(
+        verbose_name="Descripción",
+        help_text="Descripción detallada de la actividad"
+    )
+    
+    # For status changes
+    old_status = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Estado Anterior"
+    )
+    new_status = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Estado Nuevo"
+    )
+    
+    # For scheduling activities
+    scheduled_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha Programada"
+    )
+    completed_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha Completada"
+    )
+    
+    # Priority and follow-up
+    priority = models.CharField(
+        max_length=10,
+        choices=PRIORITY_CHOICES,
+        default='normal',
+        verbose_name="Prioridad"
+    )
+    
+    requires_follow_up = models.BooleanField(
+        default=False,
+        verbose_name="Requiere Seguimiento"
+    )
+    follow_up_date = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de Seguimiento"
+    )
+    
+    # User who performed the activity
+    user = models.ForeignKey(
+        'auth.User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Usuario"
+    )
+    
+    # Contact information for calls/emails
+    contact_person = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Persona de Contacto"
+    )
+    contact_email = models.EmailField(
+        blank=True,
+        verbose_name="Email de Contacto"
+    )
+    contact_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        verbose_name="Teléfono de Contacto"
+    )
+    
+    # Additional data (JSON field for flexible data storage)
+    additional_data = models.JSONField(
+        blank=True,
+        null=True,
+        verbose_name="Datos Adicionales",
+        help_text="Información adicional en formato JSON"
+    )
+    
+    # System fields
+    is_automatic = models.BooleanField(
+        default=False,
+        verbose_name="Automático",
+        help_text="Indica si la actividad fue generada automáticamente por el sistema"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de Creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última Actualización")
+
+    class Meta:
+        verbose_name = "Actividad de Cotización"
+        verbose_name_plural = "Actividades de Cotización"
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['quotation', '-created_at']),
+            models.Index(fields=['activity_type', '-created_at']),
+            models.Index(fields=['requires_follow_up', 'follow_up_date']),
+        ]
+
+    def __str__(self):
+        return f"{self.quotation.quotation_number} - {self.title}"
+
+    def save(self, *args, **kwargs):
+        # Auto-generate title if not provided
+        if not self.title:
+            self.title = self.get_auto_title()
+        super().save(*args, **kwargs)
+
+    def get_auto_title(self):
+        """Generate automatic title based on activity type"""
+        type_titles = {
+            'status_change': f'Estado cambiado a {self.get_new_status_display()}',
+            'created': 'Cotización creada',
+            'updated': 'Cotización actualizada',
+            'item_added': 'Servicio agregado',
+            'item_removed': 'Servicio eliminado',
+            'item_updated': 'Servicio modificado',
+            'note': 'Nota agregada',
+            'call_made': f'Llamada realizada a {self.contact_person or "cliente"}',
+            'call_received': f'Llamada recibida de {self.contact_person or "cliente"}',
+            'email_sent': f'Email enviado a {self.contact_email or "cliente"}',
+            'email_received': f'Email recibido de {self.contact_email or "cliente"}',
+            'meeting_scheduled': 'Reunión programada',
+            'meeting_completed': 'Reunión realizada',
+            'document_sent': 'Documento enviado',
+            'payment_received': 'Pago recibido',
+            'visit_scheduled': 'Visita programada',
+            'visit_completed': 'Visita realizada',
+            'follow_up': 'Seguimiento',
+            'reminder': 'Recordatorio',
+            'other': 'Actividad registrada',
+        }
+        return type_titles.get(self.activity_type, 'Actividad')
+
+    def get_new_status_display(self):
+        """Get display name for new status"""
+        status_choices = dict(Quotation.STATUS_CHOICES)
+        return status_choices.get(self.new_status, self.new_status)
+
+    def get_old_status_display(self):
+        """Get display name for old status"""
+        status_choices = dict(Quotation.STATUS_CHOICES)
+        return status_choices.get(self.old_status, self.old_status)
+
+    @property
+    def is_completed(self):
+        """Check if scheduled activity is completed"""
+        return self.completed_date is not None
+
+    @property
+    def is_overdue(self):
+        """Check if scheduled activity is overdue"""
+        if self.scheduled_date and not self.is_completed:
+            return timezone.now() > self.scheduled_date
+        return False
+
+    @property
+    def needs_follow_up(self):
+        """Check if activity needs follow-up"""
+        if self.requires_follow_up and self.follow_up_date:
+            return timezone.now().date() >= self.follow_up_date.date()
+        return False
+
+    def mark_completed(self, completion_date=None):
+        """Mark activity as completed"""
+        self.completed_date = completion_date or timezone.now()
+        self.save()
+
+    @classmethod
+    def create_status_change_activity(cls, quotation, old_status, new_status, user=None):
+        """Create an automatic status change activity"""
+        return cls.objects.create(
+            quotation=quotation,
+            activity_type='status_change',
+            old_status=old_status,
+            new_status=new_status,
+            description=f'Estado de la cotización cambió de {dict(Quotation.STATUS_CHOICES).get(old_status, old_status)} a {dict(Quotation.STATUS_CHOICES).get(new_status, new_status)}',
+            user=user,
+            is_automatic=True
+        )
+
+    @classmethod
+    def create_creation_activity(cls, quotation, user=None):
+        """Create an automatic creation activity"""
+        return cls.objects.create(
+            quotation=quotation,
+            activity_type='created',
+            description=f'Cotización {quotation.quotation_number} creada para {quotation.client.name}',
+            user=user,
+            is_automatic=True
+        )
