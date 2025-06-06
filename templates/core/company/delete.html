@@ -1,0 +1,204 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Eliminar Perfil de Empresa - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:company_list' %}">Perfiles de Empresa</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:company_detail' object.pk %}">{{ object.name }}</a></li>
+        <li class="breadcrumb-item active">Eliminar</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="bi bi-building-x text-danger" style="font-size: 4rem;"></i>
+                    <h4 class="mt-3">¿Eliminar perfil de empresa?</h4>
+                    <p class="text-muted">Esta acción no se puede deshacer</p>
+                </div>
+                
+                <!-- Información del perfil -->
+                <div class="alert alert-light">
+                    <div class="d-flex align-items-center mb-3">
+                        {% if object.logo %}
+                            <img src="{{ object.logo.url }}" alt="{{ object.name }}" 
+                                 class="me-3 rounded" style="max-height: 60px; max-width: 80px;">
+                        {% endif %}
+                        <div>
+                            <h6 class="mb-1">{{ object.name }}</h6>
+                            <p class="mb-0 small text-muted">{{ object.address|truncatewords:10 }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <p class="mb-2 small"><strong>Email:</strong> {{ object.email|default:"No especificado" }}</p>
+                            <p class="mb-2 small"><strong>Teléfono:</strong> {{ object.phone|default:"No especificado" }}</p>
+                        </div>
+                        <div class="col-sm-6">
+                            <p class="mb-2 small"><strong>Sitio Web:</strong> {{ object.website|default:"No especificado" }}</p>
+                            <p class="mb-2 small"><strong>IVA por defecto:</strong> {{ object.default_tax_rate }}%</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Advertencia para perfil activo -->
+                {% if object.is_active %}
+                <div class="alert alert-warning">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-exclamation-triangle text-warning"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="alert-heading">¡Atención!</h6>
+                            <p class="mb-2">Este es el <strong>perfil activo</strong> que se está usando actualmente en las cotizaciones.</p>
+                            <p class="mb-0 small">Al eliminarlo, no habrá un perfil de empresa activo disponible para nuevas cotizaciones.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Información sobre términos y condiciones -->
+                {% if object.terms_and_conditions %}
+                <div class="alert alert-info">
+                    <div class="d-flex">
+                        <div class="flex-shrink-0">
+                            <i class="bi bi-info-circle text-info"></i>
+                        </div>
+                        <div class="flex-grow-1 ms-3">
+                            <h6 class="alert-heading">Términos y Condiciones</h6>
+                            <p class="mb-2">Este perfil contiene términos y condiciones personalizados.</p>
+                            <p class="mb-0 small">Se perderán permanentemente al eliminar el perfil.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Formulario de confirmación -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-between gap-2">
+                        <a href="{% url 'core:company_detail' object.pk %}" class="btn btn-outline-secondary flex-fill">
+                            <i class="bi bi-arrow-left"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-danger flex-fill">
+                            <i class="bi bi-trash"></i> Sí, Eliminar Perfil
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Sugerencias alternativas -->
+                <div class="mt-4 p-3 bg-light rounded">
+                    <h6 class="text-muted mb-2">
+                        <i class="bi bi-lightbulb"></i> ¿Consideras alguna alternativa?
+                    </h6>
+                    <ul class="list-unstyled mb-0 small text-muted">
+                        <li class="mb-1">
+                            <i class="bi bi-arrow-right"></i> 
+                            <a href="{% url 'core:company_update' object.pk %}" class="text-decoration-none">
+                                Desactivar el perfil en lugar de eliminarlo
+                            </a>
+                        </li>
+                        <li class="mb-1">
+                            <i class="bi bi-arrow-right"></i> 
+                            Exportar la configuración antes de eliminar
+                        </li>
+                        <li>
+                            <i class="bi bi-arrow-right"></i> 
+                            Crear un nuevo perfil activo antes de eliminar este
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navegación rápida -->
+        <div class="text-center mt-3">
+            <div class="btn-group" role="group">
+                <a href="{% url 'core:company_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-list"></i> Todos los Perfiles
+                </a>
+                <a href="{% url 'core:company_update' object.pk %}" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-pencil"></i> Editar en su lugar
+                </a>
+                <a href="{% url 'core:company_detail' object.pk %}" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-eye"></i> Ver Detalles
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .alert {
+        border-left: 4px solid;
+    }
+    
+    .alert-warning {
+        border-left-color: #ffc107;
+    }
+    
+    .alert-info {
+        border-left-color: #0dcaf0;
+    }
+    
+    .alert-light {
+        border-left-color: #dee2e6;
+    }
+    
+    .card.border-danger {
+        border-width: 2px;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0;
+    }
+    
+    .btn-group .btn:first-child {
+        border-top-left-radius: 0.375rem;
+        border-bottom-left-radius: 0.375rem;
+    }
+    
+    .btn-group .btn:last-child {
+        border-top-right-radius: 0.375rem;
+        border-bottom-right-radius: 0.375rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Focus on cancel button by default for safety
+    const cancelBtn = document.querySelector('a[href*="detail"]');
+    if (cancelBtn) {
+        cancelBtn.focus();
+    }
+    
+    // Add confirmation dialog for extra safety
+    const deleteForm = document.querySelector('form[method="post"]');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function(e) {
+            const confirmed = confirm('¿Estás completamente seguro de que deseas eliminar este perfil de empresa?\n\nEsta acción NO se puede deshacer.');
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

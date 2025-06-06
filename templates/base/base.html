@@ -179,6 +179,18 @@
                                 <i class="bi bi-tags"></i> Categorías
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'salesperson' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'core:salesperson_list' %}">
+                                <i class="bi bi-person-badge"></i> Vendedores
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if 'company' in request.resolver_match.url_name %}active{% endif %}" 
+                               href="{% url 'core:company_list' %}">
+                                <i class="bi bi-building"></i> Perfiles de Empresa
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>

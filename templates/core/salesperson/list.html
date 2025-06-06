@@ -1,0 +1,211 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Vendedores - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Vendedores</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Vendedores</h1>
+    <a href="{% url 'core:salesperson_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Nuevo Vendedor
+    </a>
+</div>
+
+<!-- Filtros -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <label for="search" class="form-label">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ current_search }}" placeholder="Nombre, email o ID empleado...">
+            </div>
+            <div class="col-md-3">
+                <label for="status" class="form-label">Estado</label>
+                <select class="form-select" id="status" name="status">
+                    <option value="">Todos los estados</option>
+                    <option value="active" {% if current_status == 'active' %}selected{% endif %}>Activos</option>
+                    <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactivos</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <div class="d-flex gap-2 w-100">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-search"></i> Filtrar
+                    </button>
+                    <a href="{% url 'core:salesperson_list' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i> Limpiar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Indicadores de filtros activos -->
+{% if current_status or current_search %}
+<div class="alert alert-info d-flex align-items-center">
+    <i class="bi bi-funnel me-2"></i>
+    <div class="flex-grow-1">
+        <strong>Filtros activos:</strong>
+        {% if current_search %}
+            Búsqueda: "{{ current_search }}"
+        {% endif %}
+        {% if current_status %}
+            | Estado: {% if current_status == 'active' %}Activos{% else %}Inactivos{% endif %}
+        {% endif %}
+    </div>
+    <a href="{% url 'core:salesperson_list' %}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-x"></i> Limpiar filtros
+    </a>
+</div>
+{% endif %}
+
+{% if salespersons %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Resultados</h6>
+        <span class="badge bg-primary">{{ salespersons|length }} vendedor{{ salespersons|length|pluralize:"es" }}</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>ID Empleado</th>
+                        <th>Departamento</th>
+                        <th>Comisión</th>
+                        <th>Cotizaciones</th>
+                        <th>Estado</th>
+                        <th width="120">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for salesperson in salespersons %}
+                    <tr>
+                        <td>
+                            <strong>{{ salesperson.full_name }}</strong>
+                            {% if salesperson.phone %}
+                                <br><small class="text-muted">{{ salesperson.phone }}</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ salesperson.email }}</td>
+                        <td>
+                            {% if salesperson.employee_id %}
+                                <span class="badge bg-secondary">{{ salesperson.employee_id }}</span>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ salesperson.department|default:"-" }}</td>
+                        <td>{{ salesperson.commission_rate }}%</td>
+                        <td>
+                            <span class="badge bg-info">{{ salesperson.get_quotations_count }}</span>
+                        </td>
+                        <td>
+                            {% if salesperson.is_active %}
+                                <span class="badge bg-success">Activo</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactivo</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{% url 'core:salesperson_detail' salesperson.pk %}" class="btn btn-outline-primary" title="Ver">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'core:salesperson_update' salesperson.pk %}" class="btn btn-outline-warning" title="Editar">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <a href="{% url 'core:salesperson_delete' salesperson.pk %}" class="btn btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Paginación -->
+{% if is_paginated %}
+<nav aria-label="Paginación" class="mt-4">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Anterior</a>
+            </li>
+        {% endif %}
+        
+        <li class="page-item active">
+            <span class="page-link">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+        
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Última</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="text-center py-5">
+    <i class="bi bi-people text-muted" style="font-size: 4rem;"></i>
+    <h4 class="mt-3 text-muted">No hay vendedores registrados</h4>
+    <p class="text-muted">Comienza agregando tu primer vendedor al equipo</p>
+    <a href="{% url 'core:salesperson_create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Crear Primer Vendedor
+    </a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when status select changes
+    const statusSelect = document.getElementById('status');
+    const form = document.querySelector('form[method="get"]');
+    
+    if (statusSelect && form) {
+        statusSelect.addEventListener('change', function() {
+            form.submit();
+        });
+    }
+    
+    // Enable search on Enter key
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                form.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 

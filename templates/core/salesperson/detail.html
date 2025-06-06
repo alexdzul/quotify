@@ -1,0 +1,340 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ salesperson.full_name }} - Vendedores - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:salesperson_list' %}">Vendedores</a></li>
+        <li class="breadcrumb-item active">{{ salesperson.full_name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-person"></i> {{ salesperson.full_name }}
+            {% if not salesperson.is_active %}
+                <span class="badge bg-secondary ms-2">Inactivo</span>
+            {% endif %}
+        </h1>
+        {% if salesperson.department %}
+            <p class="text-muted mb-0">{{ salesperson.department }}</p>
+        {% endif %}
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'core:salesperson_update' salesperson.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a href="{% url 'core:salesperson_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Información del Vendedor -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Información Personal</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Email:</strong> 
+                            <a href="mailto:{{ salesperson.email }}">{{ salesperson.email }}</a>
+                        </p>
+                        <p><strong>Teléfono:</strong> 
+                            {% if salesperson.phone %}
+                                <a href="tel:{{ salesperson.phone }}">{{ salesperson.phone }}</a>
+                            {% else %}
+                                <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>ID Empleado:</strong> 
+                            {% if salesperson.employee_id %}
+                                <span class="badge bg-secondary">{{ salesperson.employee_id }}</span>
+                            {% else %}
+                                <span class="text-muted">No asignado</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Departamento:</strong> {{ salesperson.department|default:"No especificado" }}</p>
+                        <p><strong>Fecha de Contratación:</strong> 
+                            {{ salesperson.hire_date|date:"d/m/Y"|default:"No especificada" }}
+                        </p>
+                        <p><strong>Tasa de Comisión:</strong> {{ salesperson.commission_rate }}%</p>
+                    </div>
+                </div>
+                
+                {% if salesperson.notes %}
+                <hr>
+                <p><strong>Notas:</strong></p>
+                <p class="text-muted">{{ salesperson.notes|linebreaks }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Estadísticas de Ventas -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0">Estadísticas de Ventas</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-md-3">
+                        <div class="h3 mb-1 text-primary">{{ quotations_count }}</div>
+                        <div class="text-muted">Cotizaciones Totales</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h3 mb-1 text-success">${{ total_sales|floatformat:0 }}</div>
+                        <div class="text-muted">Ventas Totales</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h3 mb-1 text-warning">${{ commission_earned|floatformat:0 }}</div>
+                        <div class="text-muted">Comisión Ganada</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="h3 mb-1 text-info">{{ quotation_stats.accepted }}</div>
+                        <div class="text-muted">Ventas Cerradas</div>
+                    </div>
+                </div>
+                
+                <!-- Gráfico de estados de cotizaciones -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6 class="mb-3">Distribución de Cotizaciones por Estado</h6>
+                        <div class="row">
+                            <div class="col-md-2 text-center">
+                                <div class="h5 mb-1 text-secondary">{{ quotation_stats.draft }}</div>
+                                <div class="small text-muted">Borradores</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="h5 mb-1 text-primary">{{ quotation_stats.sent }}</div>
+                                <div class="small text-muted">Enviadas</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="h5 mb-1 text-success">{{ quotation_stats.accepted }}</div>
+                                <div class="small text-muted">Aceptadas</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="h5 mb-1 text-danger">{{ quotation_stats.rejected }}</div>
+                                <div class="small text-muted">Rechazadas</div>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <div class="h5 mb-1 text-warning">{{ quotation_stats.expired }}</div>
+                                <div class="small text-muted">Expiradas</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cotizaciones Recientes -->
+        <div class="card mt-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Cotizaciones Recientes</h5>
+                <a href="{% url 'quotations:create' %}?salesperson={{ salesperson.pk }}" class="btn btn-sm btn-primary">
+                    <i class="bi bi-plus-circle"></i> Nueva Cotización
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_quotations %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Número</th>
+                                    <th>Cliente</th>
+                                    <th>Estado</th>
+                                    <th>Total</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for quotation in recent_quotations %}
+                                <tr>
+                                    <td><strong>{{ quotation.quotation_number }}</strong></td>
+                                    <td>{{ quotation.client.name }}</td>
+                                    <td>
+                                        <span class="status-badge status-{{ quotation.status|lower }}">
+                                            {{ quotation.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td><strong>${{ quotation.total_amount|floatformat:2 }}</strong></td>
+                                    <td>{{ quotation.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'quotations:detail' quotation.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if quotations_count > 10 %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'quotations:list' %}?salesperson={{ salesperson.pk }}" class="btn btn-outline-primary">
+                            Ver Todas las Cotizaciones
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted text-center py-3">No hay cotizaciones para este vendedor</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Acciones Rápidas -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Acciones</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'quotations:create' %}?salesperson={{ salesperson.pk }}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nueva Cotización
+                </a>
+                <a href="{% url 'core:salesperson_update' salesperson.pk %}" class="btn btn-warning w-100 mb-2">
+                    <i class="bi bi-pencil"></i> Editar Vendedor
+                </a>
+                <a href="mailto:{{ salesperson.email }}" class="btn btn-outline-info w-100 mb-2">
+                    <i class="bi bi-envelope"></i> Enviar Email
+                </a>
+                {% if salesperson.phone %}
+                <a href="tel:{{ salesperson.phone }}" class="btn btn-outline-success w-100">
+                    <i class="bi bi-telephone"></i> Llamar
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Información del Sistema -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Información del Sistema</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-1">
+                    <strong>Registrado:</strong> {{ salesperson.created_at|date:"d/m/Y H:i" }}
+                </p>
+                <p class="small text-muted mb-1">
+                    <strong>Última actualización:</strong> {{ salesperson.updated_at|date:"d/m/Y H:i" }}
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Estado:</strong> 
+                    {% if salesperson.is_active %}
+                        <span class="text-success">Activo</span>
+                    {% else %}
+                        <span class="text-secondary">Inactivo</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+        <!-- Performance -->
+        {% if quotations_count > 0 %}
+        <div class="card mt-3">
+            <div class="card-header">
+                <h6 class="mb-0">Performance</h6>
+            </div>
+            <div class="card-body">
+                {% with total=quotations_count accepted=quotation_stats.accepted %}
+                    {% if total > 0 %}
+                        {% widthratio accepted total 100 as success_rate %}
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Tasa de Éxito</small>
+                                <small class="text-muted">{{ success_rate }}%</small>
+                            </div>
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {{ success_rate }}%" 
+                                     aria-valuenow="{{ success_rate }}" 
+                                     aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                
+                <div class="small text-muted">
+                    <div class="mb-1">
+                        <strong>Promedio por cotización:</strong> 
+                        ${% widthratio total_sales quotations_count 1 %}
+                    </div>
+                    <div>
+                        <strong>Tiempo en la empresa:</strong>
+                        {% if salesperson.hire_date %}
+                            {{ salesperson.hire_date|timesince }}
+                        {% else %}
+                            No especificado
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        padding: 0.375rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-draft {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #dee2e6;
+    }
+    
+    .status-sent {
+        background-color: #e3f2fd;
+        color: #1976d2;
+        border: 1px solid #bbdefb;
+    }
+    
+    .status-accepted {
+        background-color: #e8f5e8;
+        color: #2e7d32;
+        border: 1px solid #c8e6c9;
+    }
+    
+    .status-rejected {
+        background-color: #ffebee;
+        color: #c62828;
+        border: 1px solid #ffcdd2;
+    }
+    
+    .status-expired {
+        background-color: #fff3e0;
+        color: #f57c00;
+        border: 1px solid #ffcc02;
+    }
+    
+    .progress {
+        border-radius: 3px;
+    }
+    
+    .card-header h6 {
+        color: var(--bs-primary);
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,235 @@
+{% extends 'base/base.html' %}
+
+{% block title %}{{ profile.name }} - Perfiles de Empresa - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'core:company_list' %}">Perfiles de Empresa</a></li>
+        <li class="breadcrumb-item active">{{ profile.name }}</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">
+            <i class="bi bi-building"></i> {{ profile.name }}
+            {% if profile.is_active %}
+                <span class="badge bg-success ms-2">Activo</span>
+            {% else %}
+                <span class="badge bg-secondary ms-2">Inactivo</span>
+            {% endif %}
+        </h1>
+        <p class="text-muted mb-0">Perfil de Empresa</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'core:company_update' profile.pk %}" class="btn btn-warning">
+            <i class="bi bi-pencil"></i> Editar
+        </a>
+        <a href="{% url 'core:company_list' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Información Básica -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Información Básica</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <p><strong>Nombre:</strong> {{ profile.name }}</p>
+                        <p><strong>Email:</strong> 
+                            {% if profile.email %}
+                                <a href="mailto:{{ profile.email }}">{{ profile.email }}</a>
+                            {% else %}
+                                <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Teléfono:</strong> 
+                            {% if profile.phone %}
+                                <a href="tel:{{ profile.phone }}">{{ profile.phone }}</a>
+                            {% else %}
+                                <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Sitio Web:</strong> 
+                            {% if profile.website %}
+                                <a href="{{ profile.website }}" target="_blank">{{ profile.website }}</a>
+                            {% else %}
+                                <span class="text-muted">No especificado</span>
+                            {% endif %}
+                        </p>
+                        <p><strong>Dirección:</strong></p>
+                        <p class="text-muted">{{ profile.address|linebreaks }}</p>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        {% if profile.logo %}
+                            <img src="{{ profile.logo.url }}" alt="{{ profile.name }}" 
+                                 class="img-fluid rounded border" style="max-height: 150px;">
+                        {% else %}
+                            <div class="bg-light rounded border d-flex align-items-center justify-content-center" 
+                                 style="height: 150px;">
+                                <i class="bi bi-building text-muted" style="font-size: 4rem;"></i>
+                            </div>
+                        {% endif %}
+                        <div class="small text-muted mt-2">Logo de la empresa</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Redes Sociales -->
+        {% if profile.facebook_url or profile.instagram_url or profile.tiktok_url %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Redes Sociales</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if profile.facebook_url %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-facebook text-primary me-2" style="font-size: 1.5rem;"></i>
+                            <div>
+                                <div class="fw-bold">Facebook</div>
+                                <a href="{{ profile.facebook_url }}" target="_blank" class="text-decoration-none small">
+                                    Ver página
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.instagram_url %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-instagram text-danger me-2" style="font-size: 1.5rem;"></i>
+                            <div>
+                                <div class="fw-bold">Instagram</div>
+                                <a href="{{ profile.instagram_url }}" target="_blank" class="text-decoration-none small">
+                                    Ver perfil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.tiktok_url %}
+                    <div class="col-md-4 mb-3">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-tiktok text-dark me-2" style="font-size: 1.5rem;"></i>
+                            <div>
+                                <div class="fw-bold">TikTok</div>
+                                <a href="{{ profile.tiktok_url }}" target="_blank" class="text-decoration-none small">
+                                    Ver perfil
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Configuración -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Configuración</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="h3 mb-1 text-primary">{{ profile.default_tax_rate }}%</div>
+                            <div class="small text-muted">Tasa de Impuesto</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-light rounded p-3">
+                            <h6>Términos de Pago:</h6>
+                            <p class="small mb-0">{{ profile.default_payment_terms|linebreaks }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Términos y Condiciones -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Términos y Condiciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="bg-light rounded p-3">
+                    <div class="small">{{ profile.terms_and_conditions|linebreaks }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Acciones -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Acciones</h6>
+            </div>
+            <div class="card-body">
+                <a href="{% url 'core:company_update' profile.pk %}" class="btn btn-warning w-100 mb-2">
+                    <i class="bi bi-pencil"></i> Editar Perfil
+                </a>
+                <a href="{% url 'quotations:create' %}" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nueva Cotización
+                </a>
+            </div>
+        </div>
+        
+        <!-- Información del Sistema -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Información del Sistema</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-1">
+                    <strong>Creado:</strong> {{ profile.created_at|date:"d/m/Y H:i" }}
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Actualizado:</strong> {{ profile.updated_at|date:"d/m/Y H:i" }}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-header h5, .card-header h6 {
+        color: var(--bs-primary);
+    }
+    
+    .bg-light.rounded {
+        background-color: #f8f9fa !important;
+    }
+    
+    .border {
+        border-color: #dee2e6 !important;
+    }
+    
+    .social-link {
+        transition: transform 0.2s;
+    }
+    
+    .social-link:hover {
+        transform: translateY(-2px);
+    }
+</style>
+{% endblock %} 
