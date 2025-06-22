@@ -163,15 +163,23 @@ class CompanyProfileAdmin(admin.ModelAdmin):
 @admin.register(SystemSettings)
 class SystemSettingsAdmin(admin.ModelAdmin):
     list_display = [
+        'system_name',
+        'primary_color',
         'quotation_validity_days',
         'quotation_number_prefix',
         'currency_symbol',
-        'currency_code',
+        'enable_notifications',
         'updated_at'
     ]
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
+        ('Apariencia', {
+            'fields': (
+                'system_name',
+                'primary_color'
+            )
+        }),
         ('Configuración de Cotizaciones', {
             'fields': (
                 'quotation_validity_days',
@@ -182,6 +190,16 @@ class SystemSettingsAdmin(admin.ModelAdmin):
             'fields': (
                 'currency_symbol',
                 'currency_code'
+            )
+        }),
+        ('Configuración de Email', {
+            'fields': (
+                'default_email_from',
+            )
+        }),
+        ('Otras Configuraciones', {
+            'fields': (
+                'enable_notifications',
             )
         }),
         ('Fechas', {
@@ -197,3 +215,5 @@ class SystemSettingsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         # Don't allow deletion of settings
         return False
+
+

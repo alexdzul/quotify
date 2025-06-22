@@ -1,3 +1,4 @@
+{% load system_tags %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -96,7 +97,7 @@
                     <p>{{ item_data.item.display_description|linebreaks }}</p>
                     
                     <p><strong>Cantidad:</strong> {{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</p>
-                    <p><strong>Precio unitario:</strong> ${{ item_data.item.unit_price|floatformat:2 }}</p>
+                    <p><strong>Precio unitario:</strong> {{ item_data.item.unit_price|currency_format:currency_symbol }}</p>
                     
                     {% if item_data.item.service.notes %}
                         <p><strong>Notas:</strong></p>
@@ -147,10 +148,10 @@
                         {% endif %}
                     </td>
                     <td>{{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</td>
-                    <td class="text-right">${{ item_data.item.unit_price|floatformat:2 }}</td>
-                    <td class="text-right">${{ item_data.item.subtotal|floatformat:2 }}</td>
-                    <td class="text-right">${{ item_data.item.tax_amount|floatformat:2 }}</td>
-                    <td class="text-right">${{ item_data.item.total_amount|floatformat:2 }}</td>
+                    <td class="text-right">{{ item_data.item.unit_price|currency_format:currency_symbol }}</td>
+                    <td class="text-right">{{ item_data.item.subtotal|currency_format:currency_symbol }}</td>
+                    <td class="text-right">{{ item_data.item.tax_amount|currency_format:currency_symbol }}</td>
+                    <td class="text-right">{{ item_data.item.total_amount|currency_format:currency_symbol }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -161,21 +162,21 @@
         <table class="totals-table">
             <tr>
                 <td><strong>Subtotal:</strong></td>
-                <td class="text-right">${{ quotation.subtotal|floatformat:2 }}</td>
+                <td class="text-right">{{ quotation.subtotal|currency_format:currency_symbol }}</td>
             </tr>
             <tr>
                 <td><strong>IVA:</strong></td>
-                <td class="text-right">${{ quotation.tax_amount|floatformat:2 }}</td>
+                <td class="text-right">{{ quotation.tax_amount|currency_format:currency_symbol }}</td>
             </tr>
             <tr class="total-final">
                 <td><strong>TOTAL:</strong></td>
-                <td class="text-right"><strong>${{ quotation.total_amount|floatformat:2 }}</strong></td>
+                <td class="text-right"><strong>{{ quotation.total_amount|currency_format:currency_symbol }}</strong></td>
             </tr>
         </table>
         
         <div style="margin-top: 20px;">
-            <p><strong>Anticipo (60%):</strong> ${{ quotation.get_advance_payment|floatformat:2 }}</p>
-            <p><strong>Saldo (40%):</strong> ${{ quotation.get_balance_payment|floatformat:2 }}</p>
+            <p><strong>Anticipo (60%):</strong> {{ quotation.get_advance_payment|currency_format:currency_symbol }}</p>
+            <p><strong>Saldo (40%):</strong> {{ quotation.get_balance_payment|currency_format:currency_symbol }}</p>
         </div>
     </div>
 

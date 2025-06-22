@@ -29,7 +29,7 @@ class QuotationListView(LoginRequiredMixin, ListView):
     ordering = ['-created_at']
     
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('client', 'company_profile')
+        queryset = super().get_queryset().select_related('client', 'company_profile', 'salesperson')
         
         # Filtro por empresa
         company_profile_id = self.request.GET.get('company_profile')
@@ -40,6 +40,11 @@ class QuotationListView(LoginRequiredMixin, ListView):
         client_id = self.request.GET.get('client')
         if client_id:
             queryset = queryset.filter(client_id=client_id)
+        
+        # Filtro por vendedor
+        salesperson_id = self.request.GET.get('salesperson')
+        if salesperson_id:
+            queryset = queryset.filter(salesperson_id=salesperson_id)
         
         # Filtro por estado
         status = self.request.GET.get('status')
@@ -53,7 +58,9 @@ class QuotationListView(LoginRequiredMixin, ListView):
                 Q(quotation_number__icontains=search) |
                 Q(client__name__icontains=search) |
                 Q(notes__icontains=search) |
-                Q(company_profile__name__icontains=search)
+                Q(company_profile__name__icontains=search) |
+                Q(salesperson__first_name__icontains=search) |
+                Q(salesperson__last_name__icontains=search)
             )
         
         return queryset
@@ -64,11 +71,13 @@ class QuotationListView(LoginRequiredMixin, ListView):
         # Agregar listas para los filtros
         context['clients'] = Client.objects.all().order_by('name')
         context['company_profiles'] = CompanyProfile.objects.all().order_by('name')
+        context['salespersons'] = SalesPerson.objects.all().order_by('first_name', 'last_name')
         context['status_choices'] = Quotation.STATUS_CHOICES
         
         # Mantener los valores de filtro actuales en el contexto
         context['current_client'] = self.request.GET.get('client')
         context['current_company_profile'] = self.request.GET.get('company_profile')
+        context['current_salesperson'] = self.request.GET.get('salesperson')
         context['current_status'] = self.request.GET.get('status')
         context['current_search'] = self.request.GET.get('search', '')
         
@@ -84,6 +93,12 @@ class QuotationListView(LoginRequiredMixin, ListView):
                 context['current_company_profile_obj'] = CompanyProfile.objects.get(id=context['current_company_profile'])
             except CompanyProfile.DoesNotExist:
                 context['current_company_profile_obj'] = None
+        
+        if context['current_salesperson']:
+            try:
+                context['current_salesperson_obj'] = SalesPerson.objects.get(id=context['current_salesperson'])
+            except SalesPerson.DoesNotExist:
+                context['current_salesperson_obj'] = None
         
         if context['current_status']:
             context['current_status_display'] = dict(Quotation.STATUS_CHOICES).get(context['current_status'])

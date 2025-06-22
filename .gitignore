@@ -201,3 +201,6 @@ media
 
 # Visual Studio Code
 .vscode/
+
+# Ignore static files
+staticfiles/*

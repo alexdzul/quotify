@@ -174,7 +174,36 @@ NO APLICA EN CASO DE FALLO DE LUZ ELÉCTRICA PROPORCIONADA POR CLIENTE. NO APLIC
 
 
 class SystemSettings(models.Model):
-    """System-wide settings"""
+    """System-wide settings and configuration"""
+    
+    COLOR_CHOICES = [
+        ('primary', 'Azul (Predeterminado)'),
+        ('success', 'Verde'),
+        ('info', 'Cian'),
+        ('warning', 'Amarillo'),
+        ('danger', 'Rojo'),
+        ('dark', 'Negro'),
+        ('purple', 'Morado'),
+        ('pink', 'Rosa'),
+        ('orange', 'Naranja'),
+        ('teal', 'Verde Azulado'),
+        ('indigo', 'Índigo'),
+    ]
+    
+    # Appearance settings
+    primary_color = models.CharField(
+        max_length=20,
+        choices=COLOR_CHOICES,
+        default='primary',
+        verbose_name="Color Principal de la Plataforma"
+    )
+    
+    # System settings
+    system_name = models.CharField(
+        max_length=100,
+        default="Quotify",
+        verbose_name="Nombre del Sistema"
+    )
     
     # Quotation settings
     quotation_validity_days = models.PositiveIntegerField(
@@ -183,7 +212,7 @@ class SystemSettings(models.Model):
     )
     
     quotation_number_prefix = models.CharField(
-        max_length=5,
+        max_length=10,
         default="S",
         verbose_name="Prefijo del Número de Cotización"
     )
@@ -200,16 +229,28 @@ class SystemSettings(models.Model):
         verbose_name="Código de Moneda"
     )
     
+    # Email settings
+    default_email_from = models.EmailField(
+        blank=True,
+        verbose_name="Email de Envío por Defecto"
+    )
+    
+    # Other settings
+    enable_notifications = models.BooleanField(
+        default=True,
+        verbose_name="Habilitar Notificaciones"
+    )
+    
     # Timestamps
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Fecha de creación")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Última actualización")
 
     class Meta:
         verbose_name = "Configuración del Sistema"
         verbose_name_plural = "Configuraciones del Sistema"
 
     def __str__(self):
-        return "Configuración del Sistema"
+        return f"Configuración del Sistema - {self.system_name}"
 
     def save(self, *args, **kwargs):
         # Ensure only one settings object exists
@@ -220,5 +261,18 @@ class SystemSettings(models.Model):
     @classmethod
     def get_settings(cls):
         """Get system settings, create if doesn't exist"""
-        settings, created = cls.objects.get_or_create(defaults={})
+        settings, created = cls.objects.get_or_create(
+            pk=1,
+            defaults={
+                'primary_color': 'primary',
+                'system_name': 'Quotify',
+                'quotation_validity_days': 7,
+                'quotation_number_prefix': 'S',
+                'currency_symbol': '$',
+                'currency_code': 'MXN',
+                'enable_notifications': True,
+            }
+        )
         return settings
+
+

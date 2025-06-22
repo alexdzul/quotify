@@ -1,6 +1,7 @@
 {% extends 'base/base.html' %}
+{% load system_tags %}
 
-{% block title %}Vista Kanban - Quotify{% endblock %}
+{% block title %}Vista Kanban - {{ system_name }}{% endblock %}
 
 {% block breadcrumb %}
 <nav aria-label="breadcrumb">
@@ -107,7 +108,7 @@
                             {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
-                                <strong class="text-primary">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                <strong class="text-primary">{{ quotation.total_amount|currency_format:currency_symbol }}</strong>
                             </div>
                         </div>
                     </div>
@@ -167,7 +168,7 @@
                             {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
-                                <strong class="text-info">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                <strong class="text-info">{{ quotation.total_amount|currency_format:currency_symbol }}</strong>
                             </div>
                         </div>
                     </div>
@@ -227,7 +228,7 @@
                             {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
-                                <strong class="text-success">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                <strong class="text-success">{{ quotation.total_amount|currency_format:currency_symbol }}</strong>
                             </div>
                         </div>
                     </div>
@@ -287,7 +288,7 @@
                             {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
-                                <strong class="text-danger">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                <strong class="text-danger">{{ quotation.total_amount|currency_format:currency_symbol }}</strong>
                             </div>
                         </div>
                     </div>
@@ -347,7 +348,7 @@
                             {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
-                                <strong class="text-warning">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                <strong class="text-warning">{{ quotation.total_amount|currency_format:currency_symbol }}</strong>
                             </div>
                         </div>
                     </div>

@@ -49,9 +49,7 @@ class Quotation(models.Model):
     # Salesperson information
     salesperson = models.ForeignKey(
         SalesPerson,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        on_delete=models.PROTECT,
         related_name='quotations',
         verbose_name="Vendedor"
     )
@@ -82,6 +80,7 @@ class Quotation(models.Model):
     # Terms and conditions
     terms_and_conditions = models.TextField(
         blank=True,
+        null=True,
         verbose_name="Términos y Condiciones",
         help_text="Se llenarán automáticamente desde el perfil de la empresa"
     )

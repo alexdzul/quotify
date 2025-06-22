@@ -11,7 +11,7 @@ from django.contrib import messages
 from apps.quotations.models import Quotation
 from apps.clients.models import Client
 from apps.services.models import Service
-from .models import SalesPerson, CompanyProfile
+from .models import SalesPerson, CompanyProfile, SystemSettings
 from decimal import Decimal
 
 # Create your views here.
@@ -37,6 +37,8 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         context['total_quotations'] = Quotation.objects.count()
         context['total_clients'] = Client.objects.count()
         context['total_services'] = Service.objects.count()
+        context['total_companies'] = CompanyProfile.objects.count()
+        context['total_salespersons'] = SalesPerson.objects.filter(is_active=True).count()
         
         # Estadísticas de cotizaciones por estado
         quotation_stats = Quotation.objects.aggregate(
@@ -50,12 +52,48 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         
         # Valor total de cotizaciones (calculado manualmente ya que total_amount es una propiedad)
         total_value = Decimal('0.00')
+        accepted_value = Decimal('0.00')
         for quotation in Quotation.objects.all():
             total_value += quotation.total_amount
+            if quotation.status == 'accepted':
+                accepted_value += quotation.total_amount
         context['total_value'] = total_value
+        context['accepted_value'] = accepted_value
+        
+        # Estadísticas por empresa
+        companies_stats = []
+        for company in CompanyProfile.objects.all():
+            company_quotations = company.quotations.all()
+            company_value = sum(q.total_amount for q in company_quotations)
+            company_accepted = company_quotations.filter(status='accepted').count()
+            companies_stats.append({
+                'company': company,
+                'quotations_count': company_quotations.count(),
+                'total_value': company_value,
+                'accepted_count': company_accepted,
+                'conversion_rate': (company_accepted / company_quotations.count() * 100) if company_quotations.count() > 0 else 0
+            })
+        context['companies_stats'] = companies_stats
+        
+        # Estadísticas por vendedor
+        salespersons_stats = []
+        for salesperson in SalesPerson.objects.filter(is_active=True):
+            sp_quotations = salesperson.quotations.all()
+            sp_value = sum(q.total_amount for q in sp_quotations)
+            sp_accepted = sp_quotations.filter(status='accepted').count()
+            salespersons_stats.append({
+                'salesperson': salesperson,
+                'quotations_count': sp_quotations.count(),
+                'total_value': sp_value,
+                'accepted_count': sp_accepted,
+                'conversion_rate': (sp_accepted / sp_quotations.count() * 100) if sp_quotations.count() > 0 else 0
+            })
+        # Ordenar por valor total descendente
+        salespersons_stats.sort(key=lambda x: x['total_value'], reverse=True)
+        context['salespersons_stats'] = salespersons_stats[:5]  # Top 5
         
         # Cotizaciones recientes
-        context['recent_quotations'] = Quotation.objects.select_related('client').order_by('-created_at')[:5]
+        context['recent_quotations'] = Quotation.objects.select_related('client', 'company_profile', 'salesperson').order_by('-created_at')[:5]
         
         # Clientes recientes
         context['recent_clients'] = Client.objects.order_by('-created_at')[:5]
@@ -211,3 +249,22 @@ class CompanyProfileDeleteView(LoginRequiredMixin, DeleteView):
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Perfil de empresa eliminado exitosamente.')
         return super().delete(request, *args, **kwargs)
+
+# Vistas para Configuración del Sistema
+class SystemSettingsUpdateView(LoginRequiredMixin, UpdateView):
+    model = SystemSettings
+    template_name = 'core/system_settings/form.html'
+    fields = [
+        'system_name', 'primary_color', 'quotation_validity_days', 
+        'quotation_number_prefix', 'currency_symbol', 'currency_code',
+        'default_email_from', 'enable_notifications'
+    ]
+    success_url = reverse_lazy('core:system_settings')
+    
+    def get_object(self, queryset=None):
+        # Always get or create the single settings object
+        return SystemSettings.get_settings()
+    
+    def form_valid(self, form):
+        messages.success(self.request, 'Configuración del sistema actualizada exitosamente.')
+        return super().form_valid(form)

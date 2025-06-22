@@ -1,0 +1,276 @@
+{% extends 'base/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Configuración del Sistema - Quotify{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Configuración del Sistema</li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-gear"></i> Configuración del Sistema
+    </h1>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <!-- Apariencia -->
+                    <div class="mb-4">
+                        <h5 class="card-title border-bottom pb-2">
+                            <i class="bi bi-palette"></i> Apariencia
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.system_name.id_for_label }}" class="form-label">
+                                    Nombre del Sistema
+                                </label>
+                                {{ form.system_name|add_class:"form-control" }}
+                                {% if form.system_name.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.system_name.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.primary_color.id_for_label }}" class="form-label">
+                                    Color Principal
+                                </label>
+                                {{ form.primary_color|add_class:"form-select" }}
+                                {% if form.primary_color.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.primary_color.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Color principal de la interfaz de usuario
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración de Cotizaciones -->
+                    <div class="mb-4">
+                        <h5 class="card-title border-bottom pb-2">
+                            <i class="bi bi-file-text"></i> Cotizaciones
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.quotation_number_prefix.id_for_label }}" class="form-label">
+                                    Prefijo de Número
+                                </label>
+                                {{ form.quotation_number_prefix|add_class:"form-control" }}
+                                {% if form.quotation_number_prefix.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.quotation_number_prefix.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Prefijo para números de cotización (ej: S00001)
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.quotation_validity_days.id_for_label }}" class="form-label">
+                                    Días de Validez
+                                </label>
+                                {{ form.quotation_validity_days|add_class:"form-control" }}
+                                {% if form.quotation_validity_days.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.quotation_validity_days.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Días de validez por defecto para cotizaciones
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración de Moneda -->
+                    <div class="mb-4">
+                        <h5 class="card-title border-bottom pb-2">
+                            <i class="bi bi-currency-dollar"></i> Moneda
+                        </h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.currency_symbol.id_for_label }}" class="form-label">
+                                    Símbolo de Moneda
+                                </label>
+                                {{ form.currency_symbol|add_class:"form-control" }}
+                                {% if form.currency_symbol.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.currency_symbol.errors.0 }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="col-md-6 mb-3">
+                                <label for="{{ form.currency_code.id_for_label }}" class="form-label">
+                                    Código de Moneda
+                                </label>
+                                {{ form.currency_code|add_class:"form-control" }}
+                                {% if form.currency_code.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ form.currency_code.errors.0 }}
+                                    </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle"></i> Código ISO de la moneda (ej: MXN, USD)
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Configuración de Email -->
+                    <div class="mb-4">
+                        <h5 class="card-title border-bottom pb-2">
+                            <i class="bi bi-envelope"></i> Email
+                        </h5>
+                        
+                        <div class="mb-3">
+                            <label for="{{ form.default_email_from.id_for_label }}" class="form-label">
+                                Email de Envío por Defecto
+                            </label>
+                            {{ form.default_email_from|add_class:"form-control" }}
+                            {% if form.default_email_from.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.default_email_from.errors.0 }}
+                                </div>
+                            {% endif %}
+                            <div class="form-text">
+                                <i class="bi bi-info-circle"></i> Email que aparecerá como remitente en notificaciones
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Otras Configuraciones -->
+                    <div class="mb-4">
+                        <h5 class="card-title border-bottom pb-2">
+                            <i class="bi bi-toggles"></i> Otras Configuraciones
+                        </h5>
+                        
+                        <div class="form-check">
+                            {{ form.enable_notifications|add_class:"form-check-input" }}
+                            <label class="form-check-label" for="{{ form.enable_notifications.id_for_label }}">
+                                Habilitar Notificaciones
+                            </label>
+                            {% if form.enable_notifications.errors %}
+                                <div class="text-danger small mt-1">
+                                    {{ form.enable_notifications.errors.0 }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> Guardar Configuración
+                        </button>
+                        <a href="{% url 'core:dashboard' %}" class="btn btn-outline-secondary">
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0">Información</h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    <i class="bi bi-info-circle"></i> 
+                    Estas configuraciones afectan el comportamiento general del sistema.
+                </p>
+                
+                <div class="alert alert-warning small">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Importante:</strong> Los cambios en el color principal se aplicarán después de recargar la página.
+                </div>
+                
+                <div class="small text-muted">
+                    <strong>Vista previa del color:</strong>
+                    <div id="color-preview" class="mt-2 p-3 rounded text-white text-center">
+                        Color Seleccionado
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .card-title {
+        color: var(--bs-primary);
+        font-weight: 600;
+    }
+    
+    .form-label {
+        font-weight: 500;
+    }
+    
+    #color-preview {
+        background-color: var(--bs-primary);
+        border: 2px solid rgba(0,0,0,0.1);
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorSelect = document.getElementById('{{ form.primary_color.id_for_label }}');
+    const colorPreview = document.getElementById('color-preview');
+    
+    // Color mapping
+    const colorMap = {
+        'primary': '#0d6efd',
+        'success': '#198754',
+        'info': '#0dcaf0',
+        'warning': '#ffc107',
+        'danger': '#dc3545',
+        'dark': '#212529',
+        'purple': '#6f42c1',
+        'pink': '#d63384',
+        'orange': '#fd7e14',
+        'teal': '#20c997',
+        'indigo': '#6610f2'
+    };
+    
+    function updateColorPreview() {
+        const selectedColor = colorSelect.value;
+        const colorCode = colorMap[selectedColor] || colorMap['primary'];
+        colorPreview.style.backgroundColor = colorCode;
+        colorPreview.textContent = colorSelect.options[colorSelect.selectedIndex].text;
+    }
+    
+    // Update preview when color changes
+    colorSelect.addEventListener('change', updateColorPreview);
+    
+    // Initial preview
+    updateColorPreview();
+});
+</script>
+{% endblock %} 

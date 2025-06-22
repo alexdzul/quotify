@@ -21,4 +21,7 @@ urlpatterns = [
     path('company/<int:pk>/', views.CompanyProfileDetailView.as_view(), name='company_detail'),
     path('company/<int:pk>/edit/', views.CompanyProfileUpdateView.as_view(), name='company_update'),
     path('company/<int:pk>/delete/', views.CompanyProfileDeleteView.as_view(), name='company_delete'),
+    
+    # Configuración del Sistema
+    path('settings/', views.SystemSettingsUpdateView.as_view(), name='system_settings'),
 ] 
