@@ -118,12 +118,11 @@ class QuotationKanbanView(LoginRequiredMixin, TemplateView):
         if company_profile_id:
             base_queryset = base_queryset.filter(company_profile_id=company_profile_id)
         
-        # Organizar cotizaciones por estado
+        # Organizar cotizaciones por estado (excluyendo expiradas que se manejan automáticamente)
         context['draft_quotations'] = base_queryset.filter(status='draft').order_by('-created_at')
         context['sent_quotations'] = base_queryset.filter(status='sent').order_by('-created_at')
         context['accepted_quotations'] = base_queryset.filter(status='accepted').order_by('-created_at')
         context['rejected_quotations'] = base_queryset.filter(status='rejected').order_by('-created_at')
-        context['expired_quotations'] = base_queryset.filter(status='expired').order_by('-created_at')
         
         # Agregar perfiles de empresa para el filtro
         context['company_profiles'] = CompanyProfile.objects.all().order_by('name')

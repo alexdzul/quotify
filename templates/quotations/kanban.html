@@ -73,9 +73,9 @@
                 </div>
                 <div class="kanban-body" data-status="draft">
                     {% for quotation in draft_quotations %}
-                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                    <div class="kanban-card{% if quotation.is_expired %} border-warning{% endif %}" data-id="{{ quotation.id }}" draggable="true">
                         <div class="card-header">
-                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <small class="text-muted">{{ quotation.quotation_number }}{% if quotation.is_expired %} <i class="bi bi-clock text-warning" title="Expirada"></i>{% endif %}</small>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -133,9 +133,9 @@
                 </div>
                 <div class="kanban-body" data-status="sent">
                     {% for quotation in sent_quotations %}
-                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                    <div class="kanban-card{% if quotation.is_expired %} border-warning{% endif %}" data-id="{{ quotation.id }}" draggable="true">
                         <div class="card-header">
-                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <small class="text-muted">{{ quotation.quotation_number }}{% if quotation.is_expired %} <i class="bi bi-clock text-warning" title="Expirada"></i>{% endif %}</small>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -193,9 +193,9 @@
                 </div>
                 <div class="kanban-body" data-status="accepted">
                     {% for quotation in accepted_quotations %}
-                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                    <div class="kanban-card{% if quotation.is_expired %} border-warning{% endif %}" data-id="{{ quotation.id }}" draggable="true">
                         <div class="card-header">
-                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <small class="text-muted">{{ quotation.quotation_number }}{% if quotation.is_expired %} <i class="bi bi-clock text-warning" title="Expirada"></i>{% endif %}</small>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -253,9 +253,9 @@
                 </div>
                 <div class="kanban-body" data-status="rejected">
                     {% for quotation in rejected_quotations %}
-                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
+                    <div class="kanban-card{% if quotation.is_expired %} border-warning{% endif %}" data-id="{{ quotation.id }}" draggable="true">
                         <div class="card-header">
-                            <small class="text-muted">{{ quotation.quotation_number }}</small>
+                            <small class="text-muted">{{ quotation.quotation_number }}{% if quotation.is_expired %} <i class="bi bi-clock text-warning" title="Expirada"></i>{% endif %}</small>
                             <div class="dropdown">
                                 <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
                                     <i class="bi bi-three-dots-vertical"></i>
@@ -302,65 +302,7 @@
             </div>
         </div>
 
-        <!-- Columna Expiradas -->
-        <div class="col">
-            <div class="kanban-column">
-                <div class="kanban-header status-expired">
-                    <h6 class="mb-0">
-                        <i class="bi bi-clock"></i> Expiradas
-                        <span class="badge bg-dark ms-2">{{ expired_quotations.count }}</span>
-                    </h6>
-                </div>
-                <div class="kanban-body" data-status="expired">
-                    {% for quotation in expired_quotations %}
-                    <div class="kanban-card" data-id="{{ quotation.id }}" draggable="true">
-                        <div class="card-header">
-                            <small class="text-muted">{{ quotation.quotation_number }}</small>
-                            <div class="dropdown">
-                                <button class="btn btn-sm btn-link text-muted" data-bs-toggle="dropdown">
-                                    <i class="bi bi-three-dots-vertical"></i>
-                                </button>
-                                <ul class="dropdown-menu dropdown-menu-end">
-                                    <li><a class="dropdown-item" href="{% url 'quotations:detail' quotation.pk %}">Ver</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'quotations:update' quotation.pk %}">Editar</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'quotations:duplicate' quotation.pk %}">Duplicar</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <h6 class="card-title mb-0">{{ quotation.client.name }}</h6>
-                                <small class="text-muted">{{ quotation.company_profile.name }}</small>
-                            </div>
-                            {% if quotation.salesperson %}
-                                <div class="d-flex align-items-center mb-2">
-                                    {% if quotation.salesperson.profile_photo %}
-                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
-                                             class="rounded-circle me-2" style="width: 20px; height: 20px; object-fit: cover;">
-                                    {% else %}
-                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
-                                             style="width: 20px; height: 20px; color: white; font-size: 8px;">
-                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
-                                        </div>
-                                    {% endif %}
-                                    <small class="text-muted">{{ quotation.salesperson.full_name }}</small>
-                                </div>
-                            {% endif %}
-                            <div class="d-flex justify-content-between align-items-center">
-                                <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
-                                <strong class="text-warning">{{ quotation.total_amount|currency_format:currency_symbol }}</strong>
-                            </div>
-                        </div>
-                    </div>
-                                         {% empty %}
-                     <div class="empty-column">
-                         <i class="bi bi-clock text-muted"></i>
-                         <p class="text-muted small">No hay expiradas</p>
-                     </div>
-                    {% endfor %}
-                </div>
-            </div>
-        </div>
+
     </div>
 </div>
 {% endblock %}
@@ -373,48 +315,78 @@
     }
     
     .kanban-column {
-        background: #f8f9fa;
-        border-radius: 8px;
+        background: white;
+        border-radius: 12px;
         min-height: 600px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid #e9ecef;
+        overflow: hidden;
     }
     
     .kanban-header {
-        padding: 1rem;
-        border-radius: 8px 8px 0 0;
-        color: white;
-        font-weight: 500;
+        padding: 1.25rem;
+        border-radius: 12px 12px 0 0;
+        font-weight: 600;
+        border-bottom: 1px solid rgba(255,255,255,0.2);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
+    
+    /* Colores específicos para cada estado */
+    .kanban-header.status-draft {
+        background-color: #6c757d;
+        color: white;
+    }
+    
+    .kanban-header.status-sent {
+        background-color: #0dcaf0;
+        color: white;
+    }
+    
+    .kanban-header.status-accepted {
+        background-color: #198754;
+        color: white;
+    }
+    
+    .kanban-header.status-rejected {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+
     
     .kanban-body {
         padding: 1rem;
         min-height: 500px;
+        background: #f8f9fa;
     }
     
     .kanban-card {
         background: white;
-        border-radius: 6px;
-        margin-bottom: 0.75rem;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         cursor: move;
-        transition: transform 0.2s, box-shadow 0.2s;
+        transition: all 0.2s ease;
+        border: 1px solid #e9ecef;
     }
     
     .kanban-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        border-color: #007bff;
     }
     
     .kanban-card .card-header {
         background: none;
         border: none;
-        padding: 0.75rem 0.75rem 0;
+        padding: 1rem 1rem 0.5rem;
         display: flex;
-        justify-content: between;
+        justify-content: space-between;
         align-items: center;
     }
     
     .kanban-card .card-body {
-        padding: 0.5rem 0.75rem 0.75rem;
+        padding: 0 1rem 1rem;
     }
     
     .kanban-card .card-title {
@@ -437,6 +409,11 @@
     .kanban-card.dragging {
         opacity: 0.5;
         transform: rotate(5deg);
+    }
+    
+    .kanban-card.border-warning {
+        border-left: 4px solid #ffc107 !important;
+        background: linear-gradient(to right, #fff9e6, white);
     }
     
     .kanban-body.drag-over {
@@ -577,8 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
             'draft': { icon: 'bi-file-earmark', text: 'No hay borradores' },
             'sent': { icon: 'bi-send', text: 'No hay enviadas' },
             'accepted': { icon: 'bi-check-circle', text: 'No hay aceptadas' },
-            'rejected': { icon: 'bi-x-circle', text: 'No hay rechazadas' },
-            'expired': { icon: 'bi-clock', text: 'No hay expiradas' }
+            'rejected': { icon: 'bi-x-circle', text: 'No hay rechazadas' }
         };
         
         const config = statusConfig[status] || { icon: 'bi-file-earmark', text: 'No hay elementos' };
@@ -600,6 +576,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function updateQuotationStatus(quotationId, newStatus) {
+        // Validar que el nuevo estado sea permitido
+        const allowedStatuses = ['draft', 'sent', 'accepted', 'rejected'];
+        if (!allowedStatuses.includes(newStatus)) {
+            showToast('Estado no válido para movimiento manual', 'error');
+            location.reload();
+            return;
+        }
+        
         fetch(`/quotations/${quotationId}/update-status/`, {
             method: 'POST',
             headers: {
