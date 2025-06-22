@@ -27,6 +27,38 @@
     </div>
 </div>
 
+<!-- Filtro por empresa -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="company_profile" class="form-label">Filtrar por Empresa</label>
+                <select class="form-select" id="company_profile" name="company_profile" onchange="this.form.submit()">
+                    <option value="">Todas las empresas</option>
+                    {% for company in company_profiles %}
+                        <option value="{{ company.id }}" {% if current_company_profile == company.id|stringformat:"s" %}selected{% endif %}>
+                            {{ company.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% if current_company_profile_obj %}
+            <div class="col-md-8">
+                <div class="alert alert-info mb-0 d-flex align-items-center">
+                    <i class="bi bi-funnel me-2"></i>
+                    <span class="flex-grow-1">
+                        <strong>Filtrando por:</strong> {{ current_company_profile_obj.name }}
+                    </span>
+                    <a href="{% url 'quotations:kanban' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-x"></i> Limpiar
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
 <div class="kanban-board">
     <div class="row g-3">
         <!-- Columna Borrador -->
@@ -55,8 +87,24 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title">{{ quotation.client.name }}</h6>
-                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ quotation.client.name }}</h6>
+                                <small class="text-muted">{{ quotation.company_profile.name }}</small>
+                            </div>
+                            {% if quotation.salesperson %}
+                                <div class="d-flex align-items-center mb-2">
+                                    {% if quotation.salesperson.profile_photo %}
+                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                             class="rounded-circle me-2" style="width: 20px; height: 20px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 20px; height: 20px; color: white; font-size: 8px;">
+                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="text-muted">{{ quotation.salesperson.full_name }}</small>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
                                 <strong class="text-primary">${{ quotation.total_amount|floatformat:2 }}</strong>
@@ -99,8 +147,24 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title">{{ quotation.client.name }}</h6>
-                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ quotation.client.name }}</h6>
+                                <small class="text-muted">{{ quotation.company_profile.name }}</small>
+                            </div>
+                            {% if quotation.salesperson %}
+                                <div class="d-flex align-items-center mb-2">
+                                    {% if quotation.salesperson.profile_photo %}
+                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                             class="rounded-circle me-2" style="width: 20px; height: 20px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 20px; height: 20px; color: white; font-size: 8px;">
+                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="text-muted">{{ quotation.salesperson.full_name }}</small>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
                                 <strong class="text-info">${{ quotation.total_amount|floatformat:2 }}</strong>
@@ -143,8 +207,24 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title">{{ quotation.client.name }}</h6>
-                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ quotation.client.name }}</h6>
+                                <small class="text-muted">{{ quotation.company_profile.name }}</small>
+                            </div>
+                            {% if quotation.salesperson %}
+                                <div class="d-flex align-items-center mb-2">
+                                    {% if quotation.salesperson.profile_photo %}
+                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                             class="rounded-circle me-2" style="width: 20px; height: 20px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 20px; height: 20px; color: white; font-size: 8px;">
+                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="text-muted">{{ quotation.salesperson.full_name }}</small>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
                                 <strong class="text-success">${{ quotation.total_amount|floatformat:2 }}</strong>
@@ -187,8 +267,24 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title">{{ quotation.client.name }}</h6>
-                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ quotation.client.name }}</h6>
+                                <small class="text-muted">{{ quotation.company_profile.name }}</small>
+                            </div>
+                            {% if quotation.salesperson %}
+                                <div class="d-flex align-items-center mb-2">
+                                    {% if quotation.salesperson.profile_photo %}
+                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                             class="rounded-circle me-2" style="width: 20px; height: 20px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 20px; height: 20px; color: white; font-size: 8px;">
+                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="text-muted">{{ quotation.salesperson.full_name }}</small>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
                                 <strong class="text-danger">${{ quotation.total_amount|floatformat:2 }}</strong>
@@ -231,8 +327,24 @@
                             </div>
                         </div>
                         <div class="card-body">
-                            <h6 class="card-title">{{ quotation.client.name }}</h6>
-                            <p class="card-text small text-muted">{{ quotation.notes|truncatechars:50|default:"Sin notas" }}</p>
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="card-title mb-0">{{ quotation.client.name }}</h6>
+                                <small class="text-muted">{{ quotation.company_profile.name }}</small>
+                            </div>
+                            {% if quotation.salesperson %}
+                                <div class="d-flex align-items-center mb-2">
+                                    {% if quotation.salesperson.profile_photo %}
+                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                             class="rounded-circle me-2" style="width: 20px; height: 20px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 20px; height: 20px; color: white; font-size: 8px;">
+                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <small class="text-muted">{{ quotation.salesperson.full_name }}</small>
+                                </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">{{ quotation.created_at|date:"d/m/Y" }}</small>
                                 <strong class="text-warning">${{ quotation.total_amount|floatformat:2 }}</strong>

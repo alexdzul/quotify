@@ -132,7 +132,7 @@ class SalesPersonCreateView(LoginRequiredMixin, CreateView):
     fields = [
         'first_name', 'last_name', 'email', 'phone', 
         'employee_id', 'department', 'hire_date', 
-        'commission_rate', 'notes'
+        'commission_rate', 'profile_photo', 'notes'
     ]
     success_url = reverse_lazy('core:salesperson_list')
     
@@ -146,7 +146,7 @@ class SalesPersonUpdateView(LoginRequiredMixin, UpdateView):
     fields = [
         'first_name', 'last_name', 'email', 'phone', 
         'employee_id', 'department', 'hire_date', 
-        'commission_rate', 'notes', 'is_active'
+        'commission_rate', 'profile_photo', 'notes', 'is_active'
     ]
     success_url = reverse_lazy('core:salesperson_list')
     
@@ -168,7 +168,7 @@ class CompanyProfileListView(LoginRequiredMixin, ListView):
     model = CompanyProfile
     template_name = 'core/company/list.html'
     context_object_name = 'profiles'
-    ordering = ['-is_active', '-created_at']
+    ordering = ['name']
 
 class CompanyProfileDetailView(LoginRequiredMixin, DetailView):
     model = CompanyProfile
@@ -195,8 +195,7 @@ class CompanyProfileUpdateView(LoginRequiredMixin, UpdateView):
     fields = [
         'name', 'address', 'phone', 'email', 'website',
         'facebook_url', 'instagram_url', 'tiktok_url', 'logo',
-        'default_tax_rate', 'default_payment_terms', 'terms_and_conditions',
-        'is_active'
+        'default_tax_rate', 'default_payment_terms', 'terms_and_conditions'
     ]
     success_url = reverse_lazy('core:company_list')
     

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cotización {{ quotation.quotation_number }}</title>
+</head>
+<body data-quotation-number="{{ quotation.quotation_number }}">
+    <!-- HEADER CON INFORMACIÓN DE LA EMPRESA -->
+    <div class="header">
+        {% if company_logo_url %}
+            <img src="{{ company_logo_url }}" alt="{{ company_profile.name }}" class="company-logo">
+        {% endif %}
+        <h1>{{ company_profile.name|default:"Total Garden & Pool" }}</h1>
+    </div>
+
+    <!-- INFORMACIÓN CORPORATIVA -->
+    <div class="company-info">
+        <h2>Información de la Empresa</h2>
+        <p><strong>Dirección:</strong><br>{{ company_profile.address|default:quotation.company_address }}</p>
+        {% if company_profile.phone %}
+            <p><strong>Teléfono:</strong> {{ company_profile.phone }}</p>
+        {% endif %}
+        {% if company_profile.email %}
+            <p><strong>Email:</strong> {{ company_profile.email }}</p>
+        {% endif %}
+        {% if company_profile.website %}
+            <p><strong>Sitio Web:</strong> {{ company_profile.website }}</p>
+        {% endif %}
+    </div>
+
+    <!-- INFORMACIÓN DE LA COTIZACIÓN -->
+    <div class="quotation-info">
+        <div style="display: flex; justify-content: space-between;">
+            <div>
+                <h3>Información de la Cotización</h3>
+                <p><strong>Número:</strong> {{ quotation.quotation_number }}</p>
+                <p><strong>Fecha:</strong> {{ quotation.quotation_date|date:"d/m/Y" }}</p>
+                <p><strong>Válida hasta:</strong> {{ quotation.expiration_date|date:"d/m/Y" }}</p>
+                <p><strong>Estado:</strong> {{ quotation.get_status_display }}</p>
+                
+                {% if quotation.salesperson %}
+                    <h3 style="margin-top: 20px;">Vendedor Asignado</h3>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        {% if quotation.salesperson.profile_photo %}
+                            <img src="{{ salesperson_photo_url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2c5f2d;">
+                        {% endif %}
+                        <div>
+                            <p><strong>{{ quotation.salesperson.full_name }}</strong></p>
+                            {% if quotation.salesperson.email %}
+                                <p style="font-size: 0.9em;">{{ quotation.salesperson.email }}</p>
+                            {% endif %}
+                            {% if quotation.salesperson.phone %}
+                                <p style="font-size: 0.9em;">{{ quotation.salesperson.phone }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+            <div>
+                <h3>Información del Cliente</h3>
+                <p><strong>{{ quotation.client.name }}</strong></p>
+                {% if quotation.client.email %}
+                    <p>{{ quotation.client.email }}</p>
+                {% endif %}
+                {% if quotation.client.phone %}
+                    <p>{{ quotation.client.phone }}</p>
+                {% endif %}
+                {% if quotation.client.address %}
+                    <p>{{ quotation.client.address }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- DETALLE DE SERVICIOS CON FOTOS -->
+    {% for item_data in items_with_urls %}
+        <div class="service-section">
+            <div class="service-header">
+                <h3>{{ item_data.item.service.name }}</h3>
+                {% if item_data.item.service.category %}
+                    <p>Categoría: {{ item_data.item.service.category.name }}</p>
+                {% endif %}
+            </div>
+            
+            <div class="service-content">
+                {% if item_data.display_image_url %}
+                    <div class="service-image">
+                        <img src="{{ item_data.display_image_url }}" alt="{{ item_data.item.service.name }}">
+                    </div>
+                {% endif %}
+                
+                <div class="service-description">
+                    <p><strong>Descripción:</strong></p>
+                    <p>{{ item_data.item.display_description|linebreaks }}</p>
+                    
+                    <p><strong>Cantidad:</strong> {{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</p>
+                    <p><strong>Precio unitario:</strong> ${{ item_data.item.unit_price|floatformat:2 }}</p>
+                    
+                    {% if item_data.item.service.notes %}
+                        <p><strong>Notas:</strong></p>
+                        <p>{{ item_data.item.service.notes|linebreaks }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Imágenes adicionales de la galería del servicio -->
+            {% if item_data.service_images %}
+                <div style="margin-top: 20px;">
+                    <h4>Galería de Imágenes</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                        {% for image in item_data.service_images %}
+                            <img src="{{ image.url }}" alt="{{ image.caption }}" 
+                                 style="width: 120px; height: 90px; object-fit: cover; border-radius: 5px;">
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <!-- TABLA RESUMEN DE PRODUCTOS -->
+    <div class="page-break"></div>
+    <h2 style="color: #2c5f2d; border-bottom: 2px solid #2c5f2d; padding-bottom: 10px;">
+        Resumen de Productos y Servicios
+    </h2>
+    
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio Unit.</th>
+                <th>Subtotal</th>
+                                 <th>IVA</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_data in items_with_urls %}
+                <tr>
+                    <td>
+                        <strong>{{ item_data.item.service.name }}</strong>
+                        {% if item_data.item.service.category %}
+                            <br><small>{{ item_data.item.service.category.name }}</small>
+                        {% endif %}
+                    </td>
+                    <td>{{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</td>
+                    <td class="text-right">${{ item_data.item.unit_price|floatformat:2 }}</td>
+                    <td class="text-right">${{ item_data.item.subtotal|floatformat:2 }}</td>
+                    <td class="text-right">${{ item_data.item.tax_amount|floatformat:2 }}</td>
+                    <td class="text-right">${{ item_data.item.total_amount|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- TOTALES -->
+    <div class="totals-section">
+        <table class="totals-table">
+            <tr>
+                <td><strong>Subtotal:</strong></td>
+                <td class="text-right">${{ quotation.subtotal|floatformat:2 }}</td>
+            </tr>
+            <tr>
+                <td><strong>IVA:</strong></td>
+                <td class="text-right">${{ quotation.tax_amount|floatformat:2 }}</td>
+            </tr>
+            <tr class="total-final">
+                <td><strong>TOTAL:</strong></td>
+                <td class="text-right"><strong>${{ quotation.total_amount|floatformat:2 }}</strong></td>
+            </tr>
+        </table>
+        
+        <div style="margin-top: 20px;">
+            <p><strong>Anticipo (60%):</strong> ${{ quotation.get_advance_payment|floatformat:2 }}</p>
+            <p><strong>Saldo (40%):</strong> ${{ quotation.get_balance_payment|floatformat:2 }}</p>
+        </div>
+    </div>
+
+    <!-- TÉRMINOS Y CONDICIONES -->
+    <div class="terms-section">
+        <h2>Términos de Pago</h2>
+        <div class="terms-content">
+            {{ quotation.payment_terms|default:"Anticipo del 60% para la programación de los trabajos. Saldo del 40% al término de los mismos." }}
+        </div>
+        
+        {% if quotation.terms_and_conditions %}
+            <h2>Términos y Condiciones</h2>
+            <div class="terms-content">
+                {{ quotation.terms_and_conditions }}
+            </div>
+        {% endif %}
+        
+        {% if quotation.notes %}
+            <h2>Notas Adicionales</h2>
+            <div class="terms-content">
+                {{ quotation.notes|linebreaks }}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- PÁGINA DE AGRADECIMIENTO Y REDES SOCIALES -->
+    <div class="social-footer">
+        <h1>¡Gracias por su Confianza!</h1>
+        <p style="font-size: 1.2em; margin: 20px 0;">
+            Apreciamos la oportunidad de servirle y esperamos trabajar juntos en su proyecto.
+        </p>
+        
+        <p style="margin: 30px 0;">
+            Para cualquier duda o aclaración, no dude en contactarnos.
+        </p>
+        
+        <div style="margin: 30px 0;">
+            <h3>Información de Contacto</h3>
+            <p>{{ company_profile.address|default:quotation.company_address }}</p>
+            {% if company_profile.phone %}
+                <p>Teléfono: {{ company_profile.phone }}</p>
+            {% endif %}
+            {% if company_profile.email %}
+                <p>Email: {{ company_profile.email }}</p>
+            {% endif %}
+        </div>
+        
+        <div class="social-links">
+            <h3>Síguenos en Redes Sociales</h3>
+            {% if company_profile.facebook_url %}
+                <a href="{{ company_profile.facebook_url }}">Facebook</a>
+            {% endif %}
+            {% if company_profile.instagram_url %}
+                <a href="{{ company_profile.instagram_url }}">Instagram</a>
+            {% endif %}
+            {% if company_profile.tiktok_url %}
+                <a href="{{ company_profile.tiktok_url }}">TikTok</a>
+            {% endif %}
+            {% if company_profile.website %}
+                <a href="{{ company_profile.website }}">Sitio Web</a>
+            {% endif %}
+        </div>
+        
+        <p style="margin-top: 30px; font-size: 0.9em;">
+            Cotización generada el {{ "now"|date:"d/m/Y H:i" }}
+        </p>
+    </div>
+</body>
+</html> 

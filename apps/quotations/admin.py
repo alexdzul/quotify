@@ -81,6 +81,7 @@ class QuotationItemInline(admin.TabularInline):
 class QuotationAdmin(admin.ModelAdmin):
     list_display = [
         'quotation_number',
+        'company_profile',
         'client',
         'salesperson',
         'quotation_date',
@@ -91,6 +92,7 @@ class QuotationAdmin(admin.ModelAdmin):
         'get_status_badge'
     ]
     list_filter = [
+        'company_profile',
         'status', 
         'quotation_date', 
         'expiration_date', 
@@ -101,6 +103,7 @@ class QuotationAdmin(admin.ModelAdmin):
         'quotation_number', 
         'client__name', 
         'client__email',
+        'company_profile__name',
         'salesperson__first_name',
         'salesperson__last_name'
     ]
@@ -119,6 +122,7 @@ class QuotationAdmin(admin.ModelAdmin):
         ('Información Básica', {
             'fields': (
                 'quotation_number',
+                'company_profile',
                 'client', 
                 'salesperson',
                 'status'

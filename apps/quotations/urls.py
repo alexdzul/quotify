@@ -11,6 +11,8 @@ urlpatterns = [
     path('<int:pk>/edit/', views.QuotationUpdateView.as_view(), name='update'),
     path('<int:pk>/delete/', views.QuotationDeleteView.as_view(), name='delete'),
     path('<int:pk>/duplicate/', views.QuotationDuplicateView.as_view(), name='duplicate'),
+    path('<int:pk>/pdf/', views.QuotationPDFView.as_view(), name='pdf'),
+    path('<int:pk>/preview/', views.QuotationPreviewView.as_view(), name='preview'),
     
     # AJAX endpoints
     path('<int:pk>/update-status/', views.update_quotation_status, name='update_status'),

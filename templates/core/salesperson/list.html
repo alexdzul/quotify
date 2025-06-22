@@ -80,6 +80,7 @@
             <table class="table table-hover mb-0">
                 <thead>
                     <tr>
+                        <th width="60">Foto</th>
                         <th>Nombre</th>
                         <th>Email</th>
                         <th>ID Empleado</th>
@@ -93,6 +94,17 @@
                 <tbody>
                     {% for salesperson in salespersons %}
                     <tr>
+                        <td class="text-center">
+                            {% if salesperson.profile_photo %}
+                                <img src="{{ salesperson.profile_photo.url }}" alt="{{ salesperson.full_name }}" 
+                                     class="rounded-circle" style="width: 40px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" 
+                                     style="width: 40px; height: 40px; font-size: 14px; font-weight: bold;">
+                                    {{ salesperson.first_name|first|upper }}{{ salesperson.last_name|first|upper }}
+                                </div>
+                            {% endif %}
+                        </td>
                         <td>
                             <strong>{{ salesperson.full_name }}</strong>
                             {% if salesperson.phone %}

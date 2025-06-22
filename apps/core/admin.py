@@ -44,6 +44,7 @@ class SalesPersonAdmin(admin.ModelAdmin):
                 'last_name',
                 'email',
                 'phone',
+                'profile_photo',
                 'is_active'
             )
         }),
@@ -124,16 +125,15 @@ class CompanyProfileAdmin(admin.ModelAdmin):
         'name', 
         'email', 
         'phone', 
-        'is_active',
         'created_at'
     ]
-    list_filter = ['is_active', 'created_at']
+    list_filter = ['created_at']
     search_fields = ['name', 'email']
     readonly_fields = ['created_at', 'updated_at']
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('name', 'email', 'phone', 'website', 'is_active')
+            'fields': ('name', 'email', 'phone', 'website')
         }),
         ('Dirección', {
             'fields': ('address',)
@@ -157,9 +157,7 @@ class CompanyProfileAdmin(admin.ModelAdmin):
         }),
     )
     
-    def has_add_permission(self, request):
-        # Only allow one company profile
-        return not CompanyProfile.objects.filter(is_active=True).exists()
+    # Removed restriction - multiple company profiles are now allowed
 
 
 @admin.register(SystemSettings)

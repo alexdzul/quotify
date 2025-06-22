@@ -32,6 +32,12 @@
         <p class="text-muted mb-0">{{ quotation.client.name }}</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'quotations:preview' quotation.pk %}" class="btn btn-success">
+            <i class="bi bi-eye"></i> Preview PDF
+        </a>
+        <a href="{% url 'quotations:pdf' quotation.pk %}" class="btn btn-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Exportar PDF
+        </a>
         <a href="{% url 'quotations:update' quotation.pk %}" class="btn btn-warning">
             <i class="bi bi-pencil"></i> Editar
         </a>

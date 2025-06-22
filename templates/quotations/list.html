@@ -24,7 +24,18 @@
                 <input type="text" class="form-control" id="search" name="search" 
                        value="{{ current_search }}" placeholder="Número, cliente, notas...">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
+                <label for="company_profile" class="form-label">Empresa</label>
+                <select class="form-select" id="company_profile" name="company_profile">
+                    <option value="">Todas las empresas</option>
+                    {% for company in company_profiles %}
+                        <option value="{{ company.id }}" {% if current_company_profile == company.id|stringformat:"s" %}selected{% endif %}>
+                            {{ company.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
                 <label for="client" class="form-label">Cliente</label>
                 <select class="form-select" id="client" name="client">
                     <option value="">Todos los clientes</option>
@@ -35,7 +46,7 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="status" class="form-label">Estado</label>
                 <select class="form-select" id="status" name="status">
                     <option value="">Todos los estados</option>
@@ -62,13 +73,16 @@
 
 {% if quotations %}
 <!-- Indicadores de filtros activos -->
-{% if current_client or current_status or current_search %}
+{% if current_client or current_company_profile or current_status or current_search %}
 <div class="alert alert-info d-flex align-items-center">
     <i class="bi bi-funnel me-2"></i>
     <div class="flex-grow-1">
         <strong>Filtros activos:</strong>
         {% if current_search %}
             Búsqueda: "{{ current_search }}"
+        {% endif %}
+        {% if current_company_profile_obj %}
+            | Empresa: {{ current_company_profile_obj.name }}
         {% endif %}
         {% if current_client_obj %}
             | Cliente: {{ current_client_obj.name }}
@@ -94,8 +108,9 @@
                 <thead>
                     <tr>
                         <th>Número</th>
+                        <th>Empresa</th>
                         <th>Cliente</th>
-                        <th>Notas</th>
+                        <th>Vendedor</th>
                         <th>Estado</th>
                         <th>Total</th>
                         <th>Fecha</th>
@@ -106,8 +121,31 @@
                     {% for quotation in quotations %}
                     <tr>
                         <td><strong>{{ quotation.quotation_number }}</strong></td>
+                        <td>
+                            <small class="text-muted">{{ quotation.company_profile.name }}</small>
+                        </td>
                         <td>{{ quotation.client.name }}</td>
-                        <td>{{ quotation.notes|truncatechars:50|default:"-" }}</td>
+                        <td>
+                            {% if quotation.salesperson %}
+                                <div class="d-flex align-items-center">
+                                    {% if quotation.salesperson.profile_photo %}
+                                        <img src="{{ quotation.salesperson.profile_photo.url }}" alt="{{ quotation.salesperson.full_name }}" 
+                                             class="rounded-circle me-2" style="width: 32px; height: 32px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-secondary rounded-circle me-2 d-flex align-items-center justify-content-center" 
+                                             style="width: 32px; height: 32px; color: white; font-size: 14px;">
+                                            {{ quotation.salesperson.first_name|first }}{{ quotation.salesperson.last_name|first }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div class="fw-bold">{{ quotation.salesperson.full_name }}</div>
+                                        <small class="text-muted">{{ quotation.salesperson.email }}</small>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
                         <td>
                             <span class="status-badge status-{{ quotation.status|lower }}">
                                 {{ quotation.get_status_display }}
@@ -119,6 +157,12 @@
                             <div class="btn-group btn-group-sm">
                                 <a href="{% url 'quotations:detail' quotation.pk %}" class="btn btn-outline-primary" title="Ver">
                                     <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{% url 'quotations:preview' quotation.pk %}" class="btn btn-outline-success" title="Preview">
+                                    <i class="bi bi-eye-fill"></i>
+                                </a>
+                                <a href="{% url 'quotations:pdf' quotation.pk %}" class="btn btn-outline-danger" title="PDF" target="_blank">
+                                    <i class="bi bi-file-earmark-pdf"></i>
                                 </a>
                                 <a href="{% url 'quotations:update' quotation.pk %}" class="btn btn-outline-warning" title="Editar">
                                     <i class="bi bi-pencil"></i>
@@ -142,10 +186,10 @@
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
             <li class="page-item">
-                <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Primera</a>
+                <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_company_profile %}&company_profile={{ current_company_profile }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Primera</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Anterior</a>
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_company_profile %}&company_profile={{ current_company_profile }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Anterior</a>
             </li>
         {% endif %}
         
@@ -157,10 +201,10 @@
         
         {% if page_obj.has_next %}
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Siguiente</a>
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_company_profile %}&company_profile={{ current_company_profile }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Siguiente</a>
             </li>
             <li class="page-item">
-                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Última</a>
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_company_profile %}&company_profile={{ current_company_profile }}{% endif %}{% if current_client %}&client={{ current_client }}{% endif %}{% if current_status %}&status={{ current_status }}{% endif %}">Última</a>
             </li>
         {% endif %}
     </ul>

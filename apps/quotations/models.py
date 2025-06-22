@@ -6,7 +6,7 @@ import uuid
 
 from apps.clients.models import Client
 from apps.services.models import Service
-from apps.core.models import SalesPerson
+from apps.core.models import SalesPerson, CompanyProfile
 
 
 class Quotation(models.Model):
@@ -28,6 +28,15 @@ class Quotation(models.Model):
         help_text="Ejemplo: S00101"
     )
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    
+    # Company profile relationship
+    company_profile = models.ForeignKey(
+        CompanyProfile,
+        on_delete=models.PROTECT,
+        related_name='quotations',
+        verbose_name="Perfil de Empresa",
+        help_text="Perfil de empresa asociado a esta cotización"
+    )
     
     # Client information
     client = models.ForeignKey(
@@ -104,9 +113,6 @@ class Quotation(models.Model):
         return f"{self.quotation_number} - {self.client.name}"
 
     def save(self, *args, **kwargs):
-        # Import here to avoid circular imports
-        from apps.core.models import CompanyProfile
-        
         if not self.quotation_number:
             # Generate quotation number automatically
             last_quotation = Quotation.objects.filter(
@@ -124,18 +130,16 @@ class Quotation(models.Model):
             
             self.quotation_number = f'S{new_number:05d}'
         
-        # Auto-populate company information from active profile
-        if not self.pk:  # Only for new quotations
-            active_profile = CompanyProfile.get_active_profile()
-            if active_profile:
-                if not self.company_name:
-                    self.company_name = active_profile.name
-                if not self.company_address:
-                    self.company_address = active_profile.address
-                if not self.payment_terms or self.payment_terms == "Anticipo del 60% para la programación de los trabajos.\nSaldo del 40% al término de los mismos.":
-                    self.payment_terms = active_profile.default_payment_terms
-                if not self.terms_and_conditions:
-                    self.terms_and_conditions = active_profile.terms_and_conditions
+        # Auto-populate company information from company profile
+        if not self.pk and self.company_profile:  # Only for new quotations
+            if not self.company_name:
+                self.company_name = self.company_profile.name
+            if not self.company_address:
+                self.company_address = self.company_profile.address
+            if not self.payment_terms or self.payment_terms == "Anticipo del 60% para la programación de los trabajos.\nSaldo del 40% al término de los mismos.":
+                self.payment_terms = self.company_profile.default_payment_terms
+            if not self.terms_and_conditions:
+                self.terms_and_conditions = self.company_profile.terms_and_conditions
         
         super().save(*args, **kwargs)
 

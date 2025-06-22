@@ -4,14 +4,21 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib import messages
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django import forms
+from django.template.loader import render_to_string
+from django.conf import settings
+from weasyprint import HTML, CSS
+from weasyprint.text.fonts import FontConfiguration
+import tempfile
+import os
 from .models import Quotation, QuotationItem, QuotationActivity
 from apps.clients.models import Client
 from apps.services.models import Service
+from apps.core.models import CompanyProfile, SalesPerson
 import json
 
 class QuotationListView(LoginRequiredMixin, ListView):
@@ -22,7 +29,12 @@ class QuotationListView(LoginRequiredMixin, ListView):
     ordering = ['-created_at']
     
     def get_queryset(self):
-        queryset = super().get_queryset().select_related('client')
+        queryset = super().get_queryset().select_related('client', 'company_profile')
+        
+        # Filtro por empresa
+        company_profile_id = self.request.GET.get('company_profile')
+        if company_profile_id:
+            queryset = queryset.filter(company_profile_id=company_profile_id)
         
         # Filtro por cliente
         client_id = self.request.GET.get('client')
@@ -40,7 +52,8 @@ class QuotationListView(LoginRequiredMixin, ListView):
             queryset = queryset.filter(
                 Q(quotation_number__icontains=search) |
                 Q(client__name__icontains=search) |
-                Q(notes__icontains=search)
+                Q(notes__icontains=search) |
+                Q(company_profile__name__icontains=search)
             )
         
         return queryset
@@ -50,10 +63,12 @@ class QuotationListView(LoginRequiredMixin, ListView):
         
         # Agregar listas para los filtros
         context['clients'] = Client.objects.all().order_by('name')
+        context['company_profiles'] = CompanyProfile.objects.all().order_by('name')
         context['status_choices'] = Quotation.STATUS_CHOICES
         
         # Mantener los valores de filtro actuales en el contexto
         context['current_client'] = self.request.GET.get('client')
+        context['current_company_profile'] = self.request.GET.get('company_profile')
         context['current_status'] = self.request.GET.get('status')
         context['current_search'] = self.request.GET.get('search', '')
         
@@ -63,6 +78,12 @@ class QuotationListView(LoginRequiredMixin, ListView):
                 context['current_client_obj'] = Client.objects.get(id=context['current_client'])
             except Client.DoesNotExist:
                 context['current_client_obj'] = None
+        
+        if context['current_company_profile']:
+            try:
+                context['current_company_profile_obj'] = CompanyProfile.objects.get(id=context['current_company_profile'])
+            except CompanyProfile.DoesNotExist:
+                context['current_company_profile_obj'] = None
         
         if context['current_status']:
             context['current_status_display'] = dict(Quotation.STATUS_CHOICES).get(context['current_status'])
@@ -75,12 +96,28 @@ class QuotationKanbanView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
+        # Filtrar por empresa si se especifica
+        company_profile_id = self.request.GET.get('company_profile')
+        base_queryset = Quotation.objects.select_related('client', 'company_profile')
+        
+        if company_profile_id:
+            base_queryset = base_queryset.filter(company_profile_id=company_profile_id)
+        
         # Organizar cotizaciones por estado
-        context['draft_quotations'] = Quotation.objects.filter(status='draft').select_related('client').order_by('-created_at')
-        context['sent_quotations'] = Quotation.objects.filter(status='sent').select_related('client').order_by('-created_at')
-        context['accepted_quotations'] = Quotation.objects.filter(status='accepted').select_related('client').order_by('-created_at')
-        context['rejected_quotations'] = Quotation.objects.filter(status='rejected').select_related('client').order_by('-created_at')
-        context['expired_quotations'] = Quotation.objects.filter(status='expired').select_related('client').order_by('-created_at')
+        context['draft_quotations'] = base_queryset.filter(status='draft').order_by('-created_at')
+        context['sent_quotations'] = base_queryset.filter(status='sent').order_by('-created_at')
+        context['accepted_quotations'] = base_queryset.filter(status='accepted').order_by('-created_at')
+        context['rejected_quotations'] = base_queryset.filter(status='rejected').order_by('-created_at')
+        context['expired_quotations'] = base_queryset.filter(status='expired').order_by('-created_at')
+        
+        # Agregar perfiles de empresa para el filtro
+        context['company_profiles'] = CompanyProfile.objects.all().order_by('name')
+        context['current_company_profile'] = company_profile_id
+        if company_profile_id:
+            try:
+                context['current_company_profile_obj'] = CompanyProfile.objects.get(id=company_profile_id)
+            except CompanyProfile.DoesNotExist:
+                context['current_company_profile_obj'] = None
         
         return context
 
@@ -98,8 +135,7 @@ class QuotationDetailView(LoginRequiredMixin, DetailView):
 class QuotationCreateView(LoginRequiredMixin, CreateView):
     model = Quotation
     template_name = 'quotations/form.html'
-    fields = ['client', 'expiration_date', 'payment_terms', 'notes']
-    success_url = reverse_lazy('quotations:list')
+    fields = ['company_profile', 'client', 'salesperson', 'expiration_date', 'payment_terms', 'notes']
     
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -114,16 +150,28 @@ class QuotationCreateView(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['clients'] = Client.objects.all().order_by('name')
         context['services'] = Service.objects.all().select_related('category').order_by('category__name', 'name')
+        context['salespersons'] = SalesPerson.objects.filter(is_active=True).order_by('first_name', 'last_name')
         return context
+    
+    def get_initial(self):
+        initial = super().get_initial()
+        # Pre-seleccionar el primer perfil disponible por defecto
+        first_profile = CompanyProfile.objects.first()
+        if first_profile:
+            initial['company_profile'] = first_profile
+        return initial
     
     def form_valid(self, form):
         messages.success(self.request, 'Cotización creada exitosamente.')
         return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse_lazy('quotations:detail', kwargs={'pk': self.object.pk})
 
 class QuotationUpdateView(LoginRequiredMixin, UpdateView):
     model = Quotation
     template_name = 'quotations/form.html'
-    fields = ['client', 'expiration_date', 'payment_terms', 'notes', 'status']
+    fields = ['company_profile', 'client', 'salesperson', 'expiration_date', 'payment_terms', 'notes', 'status']
     success_url = reverse_lazy('quotations:list')
     
     def get_form(self, form_class=None):
@@ -139,6 +187,7 @@ class QuotationUpdateView(LoginRequiredMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['clients'] = Client.objects.all().order_by('name')
         context['services'] = Service.objects.all().select_related('category').order_by('category__name', 'name')
+        context['salespersons'] = SalesPerson.objects.filter(is_active=True).order_by('first_name', 'last_name')
         return context
     
     def form_valid(self, form):
@@ -162,6 +211,7 @@ class QuotationDuplicateView(LoginRequiredMixin, DetailView):
         
         # Crear copia de la cotización
         new_quotation = Quotation.objects.create(
+            company_profile=original.company_profile,
             client=original.client,
             payment_terms=original.payment_terms,
             notes=f"Copia de: {original.notes}" if original.notes else "Copia de cotización",
@@ -597,3 +647,286 @@ def add_item_quick(request, quotation_pk):
             'success': False,
             'message': str(e)
         })
+
+
+class QuotationPDFView(LoginRequiredMixin, DetailView):
+    """Vista para generar PDF de la cotización"""
+    model = Quotation
+    
+    def get(self, request, *args, **kwargs):
+        quotation = self.get_object()
+        company_profile = quotation.company_profile
+        
+        # Construir URLs absolutas para las imágenes
+        items_with_absolute_urls = []
+        for item in quotation.items.all().select_related('service', 'service__category'):
+            item_data = {
+                'item': item,
+                'display_image_url': request.build_absolute_uri(item.display_image.url) if item.display_image else None,
+                'service_images': []
+            }
+            
+            # Agregar URLs absolutas para imágenes de la galería del servicio
+            for img in item.service.gallery_images.all()[:4]:  # Máximo 4 imágenes
+                item_data['service_images'].append({
+                    'url': request.build_absolute_uri(img.image.url),
+                    'caption': img.caption
+                })
+            
+            items_with_absolute_urls.append(item_data)
+        
+        # Preparar el contexto para el PDF
+        context = {
+            'quotation': quotation,
+            'company_profile': company_profile,
+            'company_logo_url': request.build_absolute_uri(company_profile.logo.url) if company_profile and company_profile.logo else None,
+            'salesperson_photo_url': request.build_absolute_uri(quotation.salesperson.profile_photo.url) if quotation.salesperson and quotation.salesperson.profile_photo else None,
+            'items_with_urls': items_with_absolute_urls,
+            'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),
+        }
+        
+        # Renderizar el HTML
+        html_string = render_to_string('quotations/pdf_template.html', context, request=request)
+        
+        # Configurar WeasyPrint
+        font_config = FontConfiguration()
+        
+        # CSS para el PDF
+        css_string = """
+        @page {
+            size: A4;
+            margin: 1cm;
+            @top-center {
+                content: "Cotización " attr(data-quotation-number);
+            }
+            @bottom-center {
+                content: "Página " counter(page) " de " counter(pages);
+            }
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #2c5f2d;
+            padding-bottom: 20px;
+        }
+        
+        .company-logo {
+            max-height: 80px;
+            margin-bottom: 10px;
+        }
+        
+        .company-info {
+            background: linear-gradient(135deg, #2c5f2d, #4a7c59);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .quotation-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-left: 4px solid #2c5f2d;
+            margin-bottom: 25px;
+        }
+        
+        .client-info {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 25px;
+        }
+        
+        .service-section {
+            margin-bottom: 40px;
+            page-break-inside: avoid;
+        }
+        
+        .service-header {
+            background: #2c5f2d;
+            color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .service-content {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .service-image {
+            flex: 0 0 200px;
+        }
+        
+        .service-image img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+        }
+        
+        .service-description {
+            flex: 1;
+        }
+        
+        .items-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        
+        .items-table th,
+        .items-table td {
+            border: 1px solid #dee2e6;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        .items-table th {
+            background: #2c5f2d;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .items-table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .totals-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 30px;
+        }
+        
+        .totals-table {
+            width: 300px;
+            margin-left: auto;
+        }
+        
+        .totals-table td {
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .total-final {
+            font-weight: bold;
+            font-size: 1.2em;
+            background: #2c5f2d;
+            color: white;
+        }
+        
+        .terms-section {
+            page-break-before: always;
+            margin-bottom: 30px;
+        }
+        
+        .terms-section h2 {
+            color: #2c5f2d;
+            border-bottom: 2px solid #2c5f2d;
+            padding-bottom: 10px;
+        }
+        
+        .terms-content {
+            background: #fff;
+            padding: 20px;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            white-space: pre-line;
+        }
+        
+        .social-footer {
+            page-break-before: always;
+            text-align: center;
+            background: linear-gradient(135deg, #2c5f2d, #4a7c59);
+            color: white;
+            padding: 40px;
+            border-radius: 10px;
+        }
+        
+        .social-links {
+            margin-top: 20px;
+        }
+        
+        .social-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            font-weight: bold;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .page-break {
+            page-break-before: always;
+        }
+        """
+        
+        # Crear el PDF
+        html = HTML(string=html_string)
+        css = CSS(string=css_string, font_config=font_config)
+        
+        # Generar el PDF
+        pdf_file = html.write_pdf(stylesheets=[css], font_config=font_config)
+        
+        # Crear la respuesta HTTP
+        response = HttpResponse(pdf_file, content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="Cotizacion_{quotation.quotation_number}.pdf"'
+        
+        return response
+
+
+class QuotationPreviewView(LoginRequiredMixin, DetailView):
+    """Vista para previsualizar la cotización en HTML antes de generar PDF"""
+    model = Quotation
+    template_name = 'quotations/pdf_preview.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        quotation = self.get_object()
+        company_profile = quotation.company_profile
+        
+        # Construir URLs para las imágenes (para web no necesitamos URLs absolutas)
+        items_with_urls = []
+        for item in quotation.items.all().select_related('service', 'service__category'):
+            item_data = {
+                'item': item,
+                'display_image_url': item.display_image.url if item.display_image else None,
+                'service_images': []
+            }
+            
+            # Agregar imágenes de la galería del servicio
+            for img in item.service.gallery_images.all()[:4]:  # Máximo 4 imágenes
+                item_data['service_images'].append({
+                    'url': img.image.url,
+                    'caption': img.caption
+                })
+            
+            items_with_urls.append(item_data)
+        
+        context.update({
+            'company_profile': company_profile,
+            'company_logo_url': company_profile.logo.url if company_profile and company_profile.logo else None,
+            'salesperson_photo_url': quotation.salesperson.profile_photo.url if quotation.salesperson and quotation.salesperson.profile_photo else None,
+            'items_with_urls': items_with_urls,
+            'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),
+            'is_preview': True,  # Flag para indicar que es preview
+        })
+        
+        return context

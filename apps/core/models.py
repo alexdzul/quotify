@@ -52,6 +52,15 @@ class SalesPerson(models.Model):
         help_text="Porcentaje de comisión sobre ventas"
     )
     
+    # Profile photo
+    profile_photo = models.ImageField(
+        upload_to='salespersons/',
+        blank=True,
+        null=True,
+        verbose_name="Foto de Perfil",
+        help_text="Foto del vendedor para mostrar en cotizaciones"
+    )
+    
     # Additional information
     notes = models.TextField(blank=True, verbose_name="Notas")
     
@@ -154,27 +163,14 @@ NO APLICA EN CASO DE FALLO DE LUZ ELÉCTRICA PROPORCIONADA POR CLIENTE. NO APLIC
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
-    # Ensure only one profile exists
-    is_active = models.BooleanField(default=True, verbose_name="Activo")
 
     class Meta:
         verbose_name = "Perfil de la Empresa"
         verbose_name_plural = "Perfiles de la Empresa"
+        ordering = ['name']
 
     def __str__(self):
         return self.name
-
-    def save(self, *args, **kwargs):
-        # Ensure only one active profile
-        if self.is_active:
-            CompanyProfile.objects.filter(is_active=True).update(is_active=False)
-        super().save(*args, **kwargs)
-
-    @classmethod
-    def get_active_profile(cls):
-        """Get the active company profile"""
-        return cls.objects.filter(is_active=True).first()
 
 
 class SystemSettings(models.Model):

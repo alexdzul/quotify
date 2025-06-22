@@ -1,0 +1,399 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Preview Cotización {{ quotation.quotation_number }} - Quotify{% endblock %}
+
+{% block extra_css %}
+<style>
+    .preview-container {
+        max-width: 900px;
+        margin: 20px auto;
+        padding: 40px;
+        background: white;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border-radius: 8px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        line-height: 1.6;
+    }
+    
+    .header {
+        text-align: center;
+        margin-bottom: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        border-bottom: 3px solid #28a745;
+    }
+    
+    .company-logo {
+        max-height: 100px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .company-name {
+        font-size: 32px;
+        font-weight: 700;
+        color: #1a472a;
+        margin: 15px 0;
+        text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .company-subtitle {
+        font-size: 16px;
+        color: #666;
+        font-style: italic;
+        margin-bottom: 20px;
+    }
+    
+    .quotation-title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #28a745;
+        margin: 15px 0;
+        letter-spacing: 1px;
+    }
+    
+    .quotation-number {
+        font-size: 22px;
+        color: #666;
+        font-weight: 600;
+    }
+    
+    .info-section {
+        margin: 25px 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border-left: 5px solid #28a745;
+        border-radius: 0 8px 8px 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .info-section h3 {
+        color: #1a472a;
+        margin-bottom: 15px;
+        font-size: 18px;
+        font-weight: 600;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 8px;
+    }
+    
+    .info-item {
+        margin: 8px 0;
+        padding: 5px 0;
+    }
+    
+    .info-item strong {
+        color: #1a472a;
+        min-width: 120px;
+        display: inline-block;
+    }
+    
+    .service-item {
+        margin: 25px 0;
+        padding: 25px;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+    
+    .service-item h4 {
+        color: #1a472a;
+        margin-bottom: 15px;
+        font-size: 20px;
+        font-weight: 600;
+        border-bottom: 2px solid #28a745;
+        padding-bottom: 8px;
+    }
+    
+    .service-image {
+        max-width: 250px;
+        height: auto;
+        margin: 15px 0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 25px 0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .table th, .table td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #e9ecef;
+    }
+    
+    .table th {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+    }
+    
+    .table tr:nth-child(even) {
+        background-color: #f8f9fa;
+    }
+    
+    .table tr:hover {
+        background-color: #e8f5e8;
+    }
+    
+    .totals {
+        text-align: right;
+        margin: 30px 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        border-left: 5px solid #28a745;
+    }
+    
+    .totals > div {
+        margin: 8px 0;
+        font-size: 16px;
+    }
+    
+    .total-final {
+        font-weight: bold;
+        color: #1a472a;
+        font-size: 24px;
+        padding: 10px;
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white !important;
+        border-radius: 5px;
+        margin-top: 15px;
+    }
+    
+    .advance-payment {
+        margin-top: 20px;
+        padding-top: 15px;
+        border-top: 1px solid #dee2e6;
+        font-size: 14px;
+        color: #666;
+    }
+    
+    .footer-section {
+        text-align: center;
+        margin-top: 40px;
+        padding: 30px;
+        background: linear-gradient(135deg, #1a472a 0%, #28a745 100%);
+        color: white;
+        border-radius: 8px;
+    }
+    
+    .footer-section h3 {
+        margin-bottom: 15px;
+        font-size: 24px;
+    }
+    
+    .social-links a {
+        color: white;
+        text-decoration: none;
+        margin: 0 10px;
+        padding: 8px 15px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+    }
+    
+    @media (max-width: 768px) {
+        .preview-container {
+            margin: 10px;
+            padding: 20px;
+        }
+        
+        .company-name {
+            font-size: 24px;
+        }
+        
+        .quotation-title {
+            font-size: 20px;
+        }
+        
+        .service-image {
+            max-width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+        <i class="bi bi-eye"></i> Preview Cotización {{ quotation.quotation_number }}
+    </h1>
+    <div class="d-flex gap-2">
+        <a href="{% url 'quotations:pdf' quotation.pk %}" class="btn btn-danger" target="_blank">
+            <i class="bi bi-file-earmark-pdf"></i> Generar PDF
+        </a>
+        <a href="{% url 'quotations:detail' quotation.pk %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i> Volver
+        </a>
+    </div>
+</div>
+
+<div class="preview-container">
+    <!-- HEADER -->
+    <div class="header">
+        {% if company_logo_url %}
+            <img src="{{ company_logo_url }}" alt="{{ company_profile.name }}" class="company-logo">
+        {% endif %}
+        <h1 class="company-name">{{ company_profile.name|default:"Total Garden & Pool" }}</h1>
+        <div class="company-subtitle">Jardinería y Piscinas</div>
+        <h2 class="quotation-title">COTIZACIÓN</h2>
+        <div class="quotation-number">{{ quotation.quotation_number }}</div>
+    </div>
+
+    <!-- INFORMACIÓN DE LA EMPRESA -->
+    <div class="info-section">
+        <h3>Información de la Empresa</h3>
+        <div class="info-item"><strong>Dirección:</strong> {{ company_profile.address|default:quotation.company_address }}</div>
+        {% if company_profile.phone %}
+            <div class="info-item"><strong>Teléfono:</strong> {{ company_profile.phone }}</div>
+        {% endif %}
+        {% if company_profile.email %}
+            <div class="info-item"><strong>Email:</strong> {{ company_profile.email }}</div>
+        {% endif %}
+        {% if company_profile.website %}
+            <div class="info-item"><strong>Sitio Web:</strong> {{ company_profile.website }}</div>
+        {% endif %}
+    </div>
+
+    <!-- INFORMACIÓN DEL CLIENTE -->
+    <div class="info-section">
+        <h3>Información del Cliente</h3>
+        <div class="info-item"><strong>Cliente:</strong> {{ quotation.client.name }}</div>
+        {% if quotation.client.email %}
+            <div class="info-item"><strong>Email:</strong> {{ quotation.client.email }}</div>
+        {% endif %}
+        {% if quotation.client.phone %}
+            <div class="info-item"><strong>Teléfono:</strong> {{ quotation.client.phone }}</div>
+        {% endif %}
+        {% if quotation.client.address %}
+            <div class="info-item"><strong>Dirección:</strong> {{ quotation.client.address }}</div>
+        {% endif %}
+    </div>
+
+    <!-- DETALLES DE LA COTIZACIÓN -->
+    <div class="info-section">
+        <h3>Detalles de la Cotización</h3>
+        <div class="info-item"><strong>Fecha:</strong> {{ quotation.quotation_date|date:"d/m/Y" }}</div>
+        <div class="info-item"><strong>Válida hasta:</strong> {{ quotation.expiration_date|date:"d/m/Y" }}</div>
+        <div class="info-item"><strong>Estado:</strong> {{ quotation.get_status_display }}</div>
+    </div>
+
+    <!-- SERVICIOS -->
+    <h3>Servicios Cotizados</h3>
+    {% for item_data in items_with_urls %}
+        <div class="service-item">
+            <h4>{{ item_data.item.service.name }}</h4>
+            {% if item_data.item.service.category %}
+                <p><strong>Categoría:</strong> {{ item_data.item.service.category.name }}</p>
+            {% endif %}
+            
+            {% if item_data.display_image_url %}
+                <img src="{{ item_data.display_image_url }}" alt="{{ item_data.item.service.name }}" class="service-image">
+            {% endif %}
+            
+            <p><strong>Descripción:</strong></p>
+            <p>{{ item_data.item.display_description|linebreaks }}</p>
+            
+            <p><strong>Cantidad:</strong> {{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</p>
+            <p><strong>Precio unitario:</strong> ${{ item_data.item.unit_price|floatformat:2 }}</p>
+            <p><strong>Total:</strong> ${{ item_data.item.total_amount|floatformat:2 }}</p>
+            
+            {% if item_data.item.service.notes %}
+                <p><strong>Notas:</strong></p>
+                <p>{{ item_data.item.service.notes|linebreaks }}</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+
+    <!-- TABLA RESUMEN -->
+    <h3>Resumen de la Cotización</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Descripción</th>
+                <th>Cantidad</th>
+                <th>Precio Unitario</th>
+                <th>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item_data in items_with_urls %}
+                <tr>
+                    <td>{{ item_data.item.service.name }}</td>
+                    <td>{{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</td>
+                    <td>${{ item_data.item.unit_price|floatformat:2 }}</td>
+                    <td>${{ item_data.item.total_amount|floatformat:2 }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- TOTALES -->
+    <div class="totals">
+        <div>Subtotal: ${{ quotation.subtotal|floatformat:2 }}</div>
+        <div>IVA: ${{ quotation.tax_amount|floatformat:2 }}</div>
+        <div class="total-final">TOTAL: ${{ quotation.total_amount|floatformat:2 }}</div>
+        <div class="advance-payment">
+            <div>Anticipo (60%): ${{ quotation.get_advance_payment|floatformat:2 }}</div>
+            <div>Saldo (40%): ${{ quotation.get_balance_payment|floatformat:2 }}</div>
+        </div>
+    </div>
+
+    <!-- TÉRMINOS Y CONDICIONES -->
+    <div class="info-section">
+        <h3>Términos de Pago</h3>
+        <p>{{ quotation.payment_terms|default:"Anticipo del 60% para la programación de los trabajos. Saldo del 40% al término de los mismos." }}</p>
+        
+        {% if quotation.terms_and_conditions %}
+            <h3>Términos y Condiciones</h3>
+            <p>{{ quotation.terms_and_conditions|linebreaks }}</p>
+        {% endif %}
+        
+        {% if quotation.notes %}
+            <h3>Notas Adicionales</h3>
+            <p>{{ quotation.notes|linebreaks }}</p>
+        {% endif %}
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer-section">
+        <h3>¡Gracias por su confianza!</h3>
+        <p>Esperamos trabajar con usted en su proyecto y brindarle el mejor servicio.</p>
+        
+        <div class="social-links">
+            {% if company_profile.facebook_url %}
+                <a href="{{ company_profile.facebook_url }}" target="_blank">
+                    <i class="bi bi-facebook"></i> Facebook
+                </a>
+            {% endif %}
+            {% if company_profile.instagram_url %}
+                <a href="{{ company_profile.instagram_url }}" target="_blank">
+                    <i class="bi bi-instagram"></i> Instagram
+                </a>
+            {% endif %}
+            {% if company_profile.linkedin_url %}
+                <a href="{{ company_profile.linkedin_url }}" target="_blank">
+                    <i class="bi bi-linkedin"></i> LinkedIn
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

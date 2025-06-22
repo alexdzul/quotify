@@ -23,22 +23,15 @@
 <div class="row">
     {% for profile in profiles %}
     <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 {% if profile.is_active %}border-success{% else %}border-secondary{% endif %}">
-            {% if profile.is_active %}
-            <div class="card-header bg-success text-white">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-check-circle"></i> Perfil Activo</span>
-                    <span class="badge bg-light text-success">ACTUAL</span>
+                    <span><i class="bi bi-building"></i> {{ profile.name }}</span>
                 </div>
             </div>
-            {% else %}
-            <div class="card-header bg-secondary text-white">
-                <span><i class="bi bi-archive"></i> Perfil Inactivo</span>
-            </div>
-            {% endif %}
             
             <div class="card-body">
-                <!-- Logo y nombre -->
+                <!-- Logo -->
                 <div class="text-center mb-3">
                     {% if profile.logo %}
                         <img src="{{ profile.logo.url }}" alt="{{ profile.name }}" 
@@ -49,7 +42,6 @@
                             <i class="bi bi-building text-muted" style="font-size: 2rem;"></i>
                         </div>
                     {% endif %}
-                    <h5 class="card-title mb-0">{{ profile.name }}</h5>
                 </div>
                 
                 <!-- Información básica -->
@@ -115,7 +107,7 @@
             </div>
             
             <div class="card-footer bg-transparent">
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-center">
                     <div class="btn-group btn-group-sm">
                         <a href="{% url 'core:company_detail' profile.pk %}" class="btn btn-outline-primary" title="Ver">
                             <i class="bi bi-eye"></i>
@@ -123,18 +115,10 @@
                         <a href="{% url 'core:company_update' profile.pk %}" class="btn btn-outline-warning" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        {% if not profile.is_active %}
                         <a href="{% url 'core:company_delete' profile.pk %}" class="btn btn-outline-danger" title="Eliminar">
                             <i class="bi bi-trash"></i>
                         </a>
-                        {% endif %}
                     </div>
-                    
-                    {% if profile.is_active %}
-                        <span class="badge bg-success">En Uso</span>
-                    {% else %}
-                        <span class="badge bg-secondary">Archivado</span>
-                    {% endif %}
                 </div>
             </div>
         </div>
@@ -157,10 +141,10 @@
                         incluyendo logo, datos de contacto, términos de pago y condiciones.
                     </p>
                     <ul class="mb-0 small">
-                        <li>Solo un perfil puede estar activo a la vez</li>
-                        <li>El perfil activo se usa automáticamente en nuevas cotizaciones</li>
+                        <li>Cada cotización puede usar cualquier perfil de empresa disponible</li>
                         <li>Puedes mantener múltiples perfiles para diferentes marcas o subsidiarias</li>
-                        <li>Los perfiles inactivos se pueden reactivar en cualquier momento</li>
+                        <li>Todos los perfiles están disponibles para ser utilizados en nuevas cotizaciones</li>
+                        <li>La información del perfil se mantiene vinculada a cada cotización de forma independiente</li>
                     </ul>
                 </div>
             </div>
@@ -182,7 +166,7 @@
 
 {% block extra_css %}
 <style>
-    .card.border-success {
+    .card.border-primary {
         border-width: 2px;
     }
     

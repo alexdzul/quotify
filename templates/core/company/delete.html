@@ -54,8 +54,7 @@
                     </div>
                 </div>
                 
-                <!-- Advertencia para perfil activo -->
-                {% if object.is_active %}
+                <!-- Advertencia general -->
                 <div class="alert alert-warning">
                     <div class="d-flex">
                         <div class="flex-shrink-0">
@@ -63,12 +62,11 @@
                         </div>
                         <div class="flex-grow-1 ms-3">
                             <h6 class="alert-heading">¡Atención!</h6>
-                            <p class="mb-2">Este es el <strong>perfil activo</strong> que se está usando actualmente en las cotizaciones.</p>
-                            <p class="mb-0 small">Al eliminarlo, no habrá un perfil de empresa activo disponible para nuevas cotizaciones.</p>
+                            <p class="mb-2">Al eliminar este perfil, las cotizaciones existentes que lo usen mantendrán su información.</p>
+                            <p class="mb-0 small">Sin embargo, ya no podrás seleccionar este perfil para nuevas cotizaciones.</p>
                         </div>
                     </div>
                 </div>
-                {% endif %}
                 
                 <!-- Información sobre términos y condiciones -->
                 {% if object.terms_and_conditions %}
@@ -108,16 +106,16 @@
                         <li class="mb-1">
                             <i class="bi bi-arrow-right"></i> 
                             <a href="{% url 'core:company_update' object.pk %}" class="text-decoration-none">
-                                Desactivar el perfil en lugar de eliminarlo
+                                Modificar el perfil en lugar de eliminarlo
                             </a>
                         </li>
                         <li class="mb-1">
                             <i class="bi bi-arrow-right"></i> 
-                            Exportar la configuración antes de eliminar
+                            Duplicar la configuración antes de eliminar
                         </li>
                         <li>
                             <i class="bi bi-arrow-right"></i> 
-                            Crear un nuevo perfil activo antes de eliminar este
+                            Verificar que tienes otros perfiles disponibles
                         </li>
                     </ul>
                 </div>
