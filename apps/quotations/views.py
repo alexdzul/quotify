@@ -20,6 +20,7 @@ from apps.clients.models import Client
 from apps.services.models import Service
 from apps.core.models import CompanyProfile, SalesPerson
 import json
+import traceback
 
 class QuotationListView(LoginRequiredMixin, ListView):
     model = Quotation
@@ -165,19 +166,114 @@ class QuotationCreateView(LoginRequiredMixin, CreateView):
         context['clients'] = Client.objects.all().order_by('name')
         context['services'] = Service.objects.all().select_related('category').order_by('category__name', 'name')
         context['salespersons'] = SalesPerson.objects.filter(is_active=True).order_by('first_name', 'last_name')
+        
+        # Agregar información sobre elementos preseleccionados para mostrar en la UI
+        preselected_info = {}
+        
+        company_profile_id = self.request.GET.get('company_profile')
+        if company_profile_id:
+            try:
+                company_profile = CompanyProfile.objects.get(id=company_profile_id)
+                preselected_info['company_profile'] = company_profile
+            except (CompanyProfile.DoesNotExist, ValueError):
+                pass
+        
+        client_id = self.request.GET.get('client')
+        if client_id:
+            try:
+                client = Client.objects.get(id=client_id)
+                preselected_info['client'] = client
+            except (Client.DoesNotExist, ValueError):
+                pass
+        
+        salesperson_id = self.request.GET.get('salesperson')
+        if salesperson_id:
+            try:
+                salesperson = SalesPerson.objects.get(id=salesperson_id, is_active=True)
+                preselected_info['salesperson'] = salesperson
+            except (SalesPerson.DoesNotExist, ValueError):
+                pass
+        
+        context['preselected_info'] = preselected_info
         return context
     
     def get_initial(self):
         initial = super().get_initial()
-        # Pre-seleccionar el primer perfil disponible por defecto
-        first_profile = CompanyProfile.objects.first()
-        if first_profile:
-            initial['company_profile'] = first_profile
+        
+        # Preseleccionar perfil de empresa desde query params
+        company_profile_id = self.request.GET.get('company_profile')
+        if company_profile_id:
+            try:
+                company_profile = CompanyProfile.objects.get(id=company_profile_id)
+                initial['company_profile'] = company_profile
+            except (CompanyProfile.DoesNotExist, ValueError):
+                pass  # Si no existe o ID inválido, continuar sin preselección
+        else:
+            # Pre-seleccionar el primer perfil disponible por defecto si no se especifica uno
+            first_profile = CompanyProfile.objects.first()
+            if first_profile:
+                initial['company_profile'] = first_profile
+        
+        # Preseleccionar cliente desde query params
+        client_id = self.request.GET.get('client')
+        if client_id:
+            try:
+                client = Client.objects.get(id=client_id)
+                initial['client'] = client
+            except (Client.DoesNotExist, ValueError):
+                pass  # Si no existe o ID inválido, continuar sin preselección
+        
+        # Preseleccionar vendedor desde query params
+        salesperson_id = self.request.GET.get('salesperson')
+        if salesperson_id:
+            try:
+                salesperson = SalesPerson.objects.get(id=salesperson_id, is_active=True)
+                initial['salesperson'] = salesperson
+            except (SalesPerson.DoesNotExist, ValueError):
+                pass  # Si no existe o ID inválido, continuar sin preselección
+        
+        # Preseleccionar términos de pago desde el perfil de empresa
+        company_profile = initial.get('company_profile')
+        if company_profile and company_profile.default_payment_terms:
+            initial['payment_terms'] = company_profile.default_payment_terms
+        else:
+            # Valor por defecto si no hay perfil de empresa
+            initial['payment_terms'] = "Anticipo del 60% para la programación de los trabajos.\nSaldo del 40% al término de los mismos."
+        
         return initial
     
     def form_valid(self, form):
-        messages.success(self.request, 'Cotización creada exitosamente.')
-        return super().form_valid(form)
+        print("=== FORMULARIO VÁLIDO ===")
+        print(f"Form cleaned_data: {form.cleaned_data}")
+        try:
+            result = super().form_valid(form)
+            print(f"Cotización creada exitosamente: {self.object}")
+            messages.success(self.request, 'Cotización creada exitosamente.')
+            return result
+        except Exception as e:
+            print(f"Error al guardar: {e}")
+            print(f"Traceback: {traceback.format_exc()}")
+            messages.error(self.request, f'Error al guardar: {e}')
+            return self.render_to_response(self.get_context_data(form=form))
+    
+    def form_invalid(self, form):
+        # Log detallado para debugging
+        print("=== ERRORES DEL FORMULARIO ===")
+        print(f"Form errors: {form.errors}")
+        print(f"Form data: {form.data}")
+        print(f"Form cleaned_data: {getattr(form, 'cleaned_data', 'No cleaned_data available')}")
+        
+        # Agregar mensajes de error para debugging
+        for field, errors in form.errors.items():
+            for error in errors:
+                messages.error(self.request, f"Error en {field}: {error}")
+        
+        # Si hay errores no relacionados a campos específicos
+        if form.non_field_errors():
+            for error in form.non_field_errors():
+                messages.error(self.request, f"Error: {error}")
+        
+        return super().form_invalid(form)
     
     def get_success_url(self):
         return reverse_lazy('quotations:detail', kwargs={'pk': self.object.pk})
@@ -575,6 +671,23 @@ class QuotationItemDeleteView(LoginRequiredMixin, DeleteView):
     def get_success_url(self):
         return reverse_lazy('quotations:detail', kwargs={'pk': self.object.quotation.pk})
 
+
+@login_required
+def get_company_info(request, company_id):
+    """Vista AJAX para obtener información de una empresa"""
+    try:
+        company = get_object_or_404(CompanyProfile, id=company_id)
+        return JsonResponse({
+            'success': True,
+            'default_payment_terms': company.default_payment_terms,
+            'default_tax_rate': float(company.default_tax_rate),
+            'terms_and_conditions': company.terms_and_conditions,
+        })
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        })
 
 @login_required
 @require_POST

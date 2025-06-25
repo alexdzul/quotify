@@ -1,6 +1,8 @@
 {% extends 'base/base.html' %}
+{% load system_tags %}
+{% load static %}
 
-{% block title %}Perfiles de Empresa - Quotify{% endblock %}
+{% block title %}Perfiles de Empresa - {{ system_name }}{% endblock %}
 
 {% block breadcrumb %}
 <nav aria-label="breadcrumb">
@@ -13,39 +15,170 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3 mb-0">Perfiles de Empresa</h1>
-    <a href="{% url 'core:company_create' %}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Nuevo Perfil
-    </a>
+    <div>
+        <h1 class="h3 mb-0">Perfiles de Empresa</h1>
+        <p class="text-muted mb-0">{{ general_stats.total_profiles }} perfiles registrados</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'core:company_create' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Nuevo Perfil
+        </a>
+    </div>
 </div>
 
-{% if profiles %}
+<!-- Estadísticas Rápidas -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card text-center border-primary performance-card">
+            <div class="card-body">
+                <i class="bi bi-building text-primary stats-icon"></i>
+                <div class="metric-value text-primary">{{ general_stats.total_profiles }}</div>
+                <div class="metric-label">Total Perfiles</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-center border-info performance-card">
+            <div class="card-body">
+                <i class="bi bi-image text-info stats-icon"></i>
+                <div class="metric-value text-info">{{ general_stats.profiles_with_logo }}</div>
+                <div class="metric-label">Con Logo</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-center border-success performance-card">
+            <div class="card-body">
+                <i class="bi bi-file-text text-success stats-icon"></i>
+                <div class="metric-value text-success">{{ general_stats.profiles_with_quotations }}</div>
+                <div class="metric-label">Con Cotizaciones</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card stats-card text-center border-warning performance-card">
+            <div class="card-body">
+                <i class="bi bi-exclamation-triangle text-warning stats-icon"></i>
+                <div class="metric-value text-warning">{{ general_stats.profiles_without_quotations }}</div>
+                <div class="metric-label">Sin Actividad</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros y Búsqueda -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h6 class="mb-0">
+            <i class="bi bi-funnel"></i> Filtros y Búsqueda
+        </h6>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Buscar</label>
+                <input type="text" class="form-control" id="search" name="search" 
+                       value="{{ current_search }}" placeholder="Nombre, email, dirección, sitio web...">
+            </div>
+            <div class="col-md-3">
+                <label for="has_logo" class="form-label">Logo</label>
+                <select class="form-select" id="has_logo" name="has_logo">
+                    <option value="">Todos</option>
+                    <option value="yes" {% if current_has_logo == 'yes' %}selected{% endif %}>Con Logo</option>
+                    <option value="no" {% if current_has_logo == 'no' %}selected{% endif %}>Sin Logo</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="sort_by" class="form-label">Ordenar por</label>
+                <select class="form-select" id="sort_by" name="sort_by">
+                    <option value="name" {% if current_sort_by == 'name' %}selected{% endif %}>Nombre</option>
+                    <option value="quotations_count" {% if current_sort_by == 'quotations_count' %}selected{% endif %}>Número de Cotizaciones</option>
+                    <option value="created_at" {% if current_sort_by == 'created_at' %}selected{% endif %}>Fecha de Creación</option>
+                    <option value="updated_at" {% if current_sort_by == 'updated_at' %}selected{% endif %}>Última Actualización</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+        
+        <!-- Filtros Activos -->
+        {% if current_search or current_has_logo or current_sort_by != 'name' %}
+        <div class="mt-3">
+            <div class="d-flex align-items-center gap-2 flex-wrap">
+                <small class="text-muted">Filtros activos:</small>
+                {% if current_search %}
+                    <span class="badge bg-primary">
+                        Búsqueda: "{{ current_search }}"
+                        <a href="?{% if current_has_logo %}has_logo={{ current_has_logo }}&{% endif %}{% if current_sort_by != 'name' %}sort_by={{ current_sort_by }}{% endif %}" class="text-white ms-1">×</a>
+                    </span>
+                {% endif %}
+                {% if current_has_logo == 'yes' %}
+                    <span class="badge bg-info">
+                        Con Logo
+                        <a href="?{% if current_search %}search={{ current_search }}&{% endif %}{% if current_sort_by != 'name' %}sort_by={{ current_sort_by }}{% endif %}" class="text-white ms-1">×</a>
+                    </span>
+                {% elif current_has_logo == 'no' %}
+                    <span class="badge bg-warning">
+                        Sin Logo
+                        <a href="?{% if current_search %}search={{ current_search }}&{% endif %}{% if current_sort_by != 'name' %}sort_by={{ current_sort_by }}{% endif %}" class="text-white ms-1">×</a>
+                    </span>
+                {% endif %}
+                {% if current_sort_by != 'name' %}
+                    <span class="badge bg-secondary">
+                        Orden: {{ current_sort_by|capfirst }}
+                        <a href="?{% if current_search %}search={{ current_search }}&{% endif %}{% if current_has_logo %}has_logo={{ current_has_logo }}{% endif %}" class="text-white ms-1">×</a>
+                    </span>
+                {% endif %}
+                <a href="{% url 'core:company_list' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-x-circle"></i> Limpiar todos
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if profiles_with_stats %}
 <div class="row">
-    {% for profile in profiles %}
+    {% for stats in profiles_with_stats %}
+    {% with profile=stats.profile %}
     <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 border-primary">
-            <div class="card-header bg-primary text-white">
+        <div class="card company-card h-100 {% if stats.quotations_count > 0 %}border-success active{% else %}border-secondary inactive{% endif %}">
+            <div class="card-header {% if stats.quotations_count > 0 %}bg-success text-white{% else %}bg-light{% endif %}">
                 <div class="d-flex justify-content-between align-items-center">
-                    <span><i class="bi bi-building"></i> {{ profile.name }}</span>
+                    <span class="fw-bold">
+                        <span class="activity-indicator activity-{{ profile.activity_level }}"></span>
+                        <i class="bi bi-building"></i> {{ profile.name }}
+                    </span>
+                    {% if stats.quotations_count > 0 %}
+                        <span class="badge bg-light text-dark">{{ stats.quotations_count }} cotizaciones</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Sin actividad</span>
+                    {% endif %}
                 </div>
             </div>
             
             <div class="card-body">
                 <!-- Logo -->
                 <div class="text-center mb-3">
-                    {% if profile.logo %}
-                        <img src="{{ profile.logo.url }}" alt="{{ profile.name }}" 
-                             class="img-fluid rounded mb-2" style="max-height: 80px; max-width: 120px;">
-                    {% else %}
-                        <div class="bg-light rounded d-flex align-items-center justify-content-center mb-2" 
-                             style="height: 80px; width: 120px; margin: 0 auto;">
-                            <i class="bi bi-building text-muted" style="font-size: 2rem;"></i>
-                        </div>
-                    {% endif %}
+                    <div class="logo-container d-inline-block">
+                        {% if profile.logo %}
+                            <img src="{{ profile.logo.url }}" alt="{{ profile.name }}" 
+                                 class="img-fluid rounded mb-2" style="max-height: 80px; max-width: 120px;">
+                        {% else %}
+                            <div class="bg-light rounded d-flex align-items-center justify-content-center mb-2" 
+                                 style="height: 80px; width: 120px; margin: 0 auto;">
+                                <i class="bi bi-building text-muted" style="font-size: 2rem;"></i>
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
                 
                 <!-- Información básica -->
-                <div class="small text-muted mb-3">
+                <div class="small mb-3">
                     {% if profile.email %}
                         <div class="mb-1">
                             <i class="bi bi-envelope me-1"></i>
@@ -62,21 +195,50 @@
                         <div class="mb-1">
                             <i class="bi bi-globe me-1"></i>
                             <a href="{{ profile.website }}" target="_blank" class="text-decoration-none">
-                                {{ profile.website|slice:":30" }}{% if profile.website|length > 30 %}...{% endif %}
+                                {{ profile.website|slice:":25" }}{% if profile.website|length > 25 %}...{% endif %}
                             </a>
                         </div>
                     {% endif %}
                 </div>
                 
+                <!-- Métricas de Rendimiento -->
+                {% if stats.quotations_count > 0 %}
+                <div class="mb-3">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="fw-bold text-success">{{ stats.conversion_rate|floatformat:1 }}%</div>
+                            <div class="small text-muted">Conversión</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-primary">{{ stats.total_value|currency_format:currency_symbol }}</div>
+                            <div class="small text-muted">Valor Total</div>
+                        </div>
+                    </div>
+                    {% if stats.recent_quotation_date %}
+                    <div class="text-center mt-2">
+                        <small class="text-muted">
+                            <i class="bi bi-clock"></i> Última cotización: {{ stats.recent_quotation_date|timesince }} atrás
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="mb-3">
+                    <div class="alert alert-warning py-2 px-3 mb-0">
+                        <small><i class="bi bi-exclamation-triangle"></i> Sin cotizaciones registradas</small>
+                    </div>
+                </div>
+                {% endif %}
+                
                 <!-- Configuración -->
                 <div class="mb-3">
                     <div class="row text-center">
                         <div class="col-6">
-                            <div class="fw-bold text-primary">{{ profile.default_tax_rate }}%</div>
+                            <div class="fw-bold text-info">{{ profile.default_tax_rate }}%</div>
                             <div class="small text-muted">IVA</div>
                         </div>
                         <div class="col-6">
-                            <div class="fw-bold text-info">{{ profile.created_at|date:"M Y" }}</div>
+                            <div class="fw-bold text-secondary">{{ profile.created_at|date:"M Y" }}</div>
                             <div class="small text-muted">Creado</div>
                         </div>
                     </div>
@@ -108,23 +270,60 @@
             
             <div class="card-footer bg-transparent">
                 <div class="d-flex justify-content-center">
-                    <div class="btn-group btn-group-sm">
-                        <a href="{% url 'core:company_detail' profile.pk %}" class="btn btn-outline-primary" title="Ver">
+                    <div class="btn-group btn-group-sm action-btn-group">
+                        <a href="{% url 'core:company_detail' profile.pk %}" class="btn btn-outline-primary" title="Ver Detalles">
                             <i class="bi bi-eye"></i>
                         </a>
                         <a href="{% url 'core:company_update' profile.pk %}" class="btn btn-outline-warning" title="Editar">
                             <i class="bi bi-pencil"></i>
                         </a>
+                        {% if stats.quotations_count == 0 %}
                         <a href="{% url 'core:company_delete' profile.pk %}" class="btn btn-outline-danger" title="Eliminar">
                             <i class="bi bi-trash"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'quotations:create' %}?company_profile={{ profile.pk }}" class="btn btn-success btn-sm" title="Nueva Cotización">
+                            <i class="bi bi-plus-circle"></i>
                         </a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    {% endwith %}
     {% endfor %}
 </div>
+
+<!-- Paginación -->
+{% if is_paginated %}
+<nav aria-label="Paginación de perfiles">
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page=1{% if current_search %}&search={{ current_search }}{% endif %}{% if current_has_logo %}&has_logo={{ current_has_logo }}{% endif %}{% if current_sort_by %}&sort_by={{ current_sort_by }}{% endif %}">Primera</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_has_logo %}&has_logo={{ current_has_logo }}{% endif %}{% if current_sort_by %}&sort_by={{ current_sort_by }}{% endif %}">Anterior</a>
+            </li>
+        {% endif %}
+
+        <li class="page-item active">
+            <span class="page-link">
+                Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+            </span>
+        </li>
+
+        {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_has_logo %}&has_logo={{ current_has_logo }}{% endif %}{% if current_sort_by %}&sort_by={{ current_sort_by }}{% endif %}">Siguiente</a>
+            </li>
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if current_search %}&search={{ current_search }}{% endif %}{% if current_has_logo %}&has_logo={{ current_has_logo }}{% endif %}{% if current_sort_by %}&sort_by={{ current_sort_by }}{% endif %}">Última</a>
+            </li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 
 <!-- Información adicional -->
 <div class="row mt-4">
@@ -143,7 +342,7 @@
                     <ul class="mb-0 small">
                         <li>Cada cotización puede usar cualquier perfil de empresa disponible</li>
                         <li>Puedes mantener múltiples perfiles para diferentes marcas o subsidiarias</li>
-                        <li>Todos los perfiles están disponibles para ser utilizados en nuevas cotizaciones</li>
+                        <li>Los perfiles con más actividad aparecen resaltados en verde</li>
                         <li>La información del perfil se mantiene vinculada a cada cotización de forma independiente</li>
                     </ul>
                 </div>
@@ -155,19 +354,43 @@
 {% else %}
 <div class="text-center py-5">
     <i class="bi bi-building text-muted" style="font-size: 4rem;"></i>
-    <h4 class="mt-3 text-muted">No hay perfiles de empresa</h4>
-    <p class="text-muted">Crea el primer perfil de tu empresa para usar en las cotizaciones</p>
+    <h4 class="mt-3 text-muted">
+        {% if current_search or current_has_logo %}
+            No se encontraron perfiles que coincidan con los filtros
+        {% else %}
+            No hay perfiles de empresa
+        {% endif %}
+    </h4>
+    <p class="text-muted">
+        {% if current_search or current_has_logo %}
+            Intenta ajustar los filtros de búsqueda
+        {% else %}
+            Crea el primer perfil de tu empresa para usar en las cotizaciones
+        {% endif %}
+    </p>
+    {% if current_search or current_has_logo %}
+        <a href="{% url 'core:company_list' %}" class="btn btn-outline-secondary me-2">
+            <i class="bi bi-arrow-left"></i> Ver Todos
+        </a>
+    {% endif %}
     <a href="{% url 'core:company_create' %}" class="btn btn-primary">
-        <i class="bi bi-plus-circle"></i> Crear Primer Perfil
+        <i class="bi bi-plus-circle"></i> 
+        {% if current_search or current_has_logo %}Crear Perfil{% else %}Crear Primer Perfil{% endif %}
     </a>
 </div>
 {% endif %}
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/company-profiles.css' %}">
 <style>
-    .card.border-primary {
+    .card.border-success {
         border-width: 2px;
+    }
+    
+    .card.border-secondary {
+        border-width: 1px;
+        opacity: 0.8;
     }
     
     .card-title {
@@ -187,8 +410,30 @@
         border-left-color: #0dcaf0;
     }
     
+    .alert-warning {
+        border-left-color: #ffc107;
+    }
+    
     .card-footer {
         border-top: 1px solid rgba(0,0,0,.125);
+    }
+    
+    .badge a {
+        text-decoration: none;
+    }
+    
+    .badge a:hover {
+        color: #fff !important;
+    }
+    
+    .card.border-success .card-header {
+        background-color: #198754 !important;
+    }
+    
+    .performance-indicator {
+        height: 4px;
+        border-radius: 2px;
+        background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #198754 100%);
     }
 </style>
 {% endblock %} 

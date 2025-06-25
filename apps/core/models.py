@@ -172,6 +172,59 @@ NO APLICA EN CASO DE FALLO DE LUZ ELÉCTRICA PROPORCIONADA POR CLIENTE. NO APLIC
     def __str__(self):
         return self.name
 
+    def get_quotations_count(self):
+        """Return the number of quotations for this company profile"""
+        return self.quotations.count()
+
+    def get_accepted_quotations_count(self):
+        """Return the number of accepted quotations"""
+        return self.quotations.filter(status='accepted').count()
+
+    def get_conversion_rate(self):
+        """Calculate the conversion rate of quotations"""
+        total = self.get_quotations_count()
+        if total == 0:
+            return 0
+        accepted = self.get_accepted_quotations_count()
+        return (accepted / total) * 100
+
+    def get_total_quoted_value(self):
+        """Calculate total value of all quotations"""
+        return sum(q.total_amount for q in self.quotations.all())
+
+    def get_accepted_value(self):
+        """Calculate total value of accepted quotations"""
+        return sum(q.total_amount for q in self.quotations.filter(status='accepted'))
+
+    def get_pending_value(self):
+        """Calculate total value of pending quotations (draft + sent)"""
+        return sum(q.total_amount for q in self.quotations.filter(status__in=['draft', 'sent']))
+
+    def get_recent_quotation_date(self):
+        """Get the date of the most recent quotation"""
+        recent_quotation = self.quotations.order_by('-created_at').first()
+        return recent_quotation.created_at if recent_quotation else None
+
+    def has_activity(self):
+        """Check if the company profile has any quotations"""
+        return self.get_quotations_count() > 0
+
+    @property
+    def activity_level(self):
+        """Return activity level based on number of quotations"""
+        count = self.get_quotations_count()
+        if count == 0:
+            return 'inactive'
+        elif count <= 5:
+            return 'low'
+        elif count <= 15:
+            return 'medium'
+        else:
+            return 'high'
+
+    get_quotations_count.short_description = "Cotizaciones"
+    get_accepted_quotations_count.short_description = "Aceptadas"
+
 
 class SystemSettings(models.Model):
     """System-wide settings and configuration"""

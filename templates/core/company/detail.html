@@ -1,6 +1,8 @@
 {% extends 'base/base.html' %}
+{% load system_tags %}
+{% load static %}
 
-{% block title %}{{ profile.name }} - Perfiles de Empresa - Quotify{% endblock %}
+{% block title %}{{ profile.name }} - Perfiles de Empresa - {{ system_name }}{% endblock %}
 
 {% block breadcrumb %}
 <nav aria-label="breadcrumb">
@@ -17,11 +19,18 @@
     <div>
         <h1 class="h3 mb-0">
             <i class="bi bi-building"></i> {{ profile.name }}
-            <span class="badge bg-primary ms-2">Disponible</span>
+            {% if quotations_count > 0 %}
+                <span class="badge bg-success ms-2">{{ quotations_count }} cotizaciones</span>
+            {% else %}
+                <span class="badge bg-secondary ms-2">Sin actividad</span>
+            {% endif %}
         </h1>
         <p class="text-muted mb-0">Perfil de Empresa</p>
     </div>
     <div class="d-flex gap-2">
+        <a href="{% url 'quotations:create' %}?company_profile={{ profile.pk }}" class="btn btn-success">
+            <i class="bi bi-plus-circle"></i> Nueva Cotización
+        </a>
         <a href="{% url 'core:company_update' profile.pk %}" class="btn btn-warning">
             <i class="bi bi-pencil"></i> Editar
         </a>
@@ -30,6 +39,83 @@
         </a>
     </div>
 </div>
+
+<!-- Métricas Principales -->
+{% if quotations_count > 0 %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card text-center border-primary">
+            <div class="card-body">
+                <i class="bi bi-file-text text-primary" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">{{ quotations_count }}</h4>
+                <small class="text-muted">Total Cotizaciones</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-success">
+            <div class="card-body">
+                <i class="bi bi-check-circle text-success" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">{{ conversion_rate|floatformat:1 }}%</h4>
+                <small class="text-muted">Tasa de Conversión</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-info">
+            <div class="card-body">
+                <i class="bi bi-currency-dollar text-info" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">{{ total_value|currency_format:currency_symbol }}</h4>
+                <small class="text-muted">Valor Total</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center border-warning">
+            <div class="card-body">
+                <i class="bi bi-hourglass-split text-warning" style="font-size: 2rem;"></i>
+                <h4 class="mt-2 mb-0">{{ pending_value|currency_format:currency_symbol }}</h4>
+                <small class="text-muted">Valor Pendiente</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Gráfico de Estado de Cotizaciones -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Estado de las Cotizaciones</h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <div class="status-circle status-draft">{{ quotation_stats.draft }}</div>
+                        <p class="mt-2 mb-0 small">Borrador</p>
+                    </div>
+                    <div class="col">
+                        <div class="status-circle status-sent">{{ quotation_stats.sent }}</div>
+                        <p class="mt-2 mb-0 small">Enviadas</p>
+                    </div>
+                    <div class="col">
+                        <div class="status-circle status-accepted">{{ quotation_stats.accepted }}</div>
+                        <p class="mt-2 mb-0 small">Aceptadas</p>
+                    </div>
+                    <div class="col">
+                        <div class="status-circle status-rejected">{{ quotation_stats.rejected }}</div>
+                        <p class="mt-2 mb-0 small">Rechazadas</p>
+                    </div>
+                    <div class="col">
+                        <div class="status-circle status-expired">{{ quotation_stats.expired }}</div>
+                        <p class="mt-2 mb-0 small">Expiradas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
 
 <div class="row">
     <div class="col-lg-8">
@@ -158,6 +244,120 @@
                 </div>
             </div>
         </div>
+
+        <!-- Top Clientes y Vendedores -->
+        {% if quotations_count > 0 %}
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Top Clientes</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if top_clients %}
+                            <div class="list-group list-group-flush">
+                                {% for client in top_clients %}
+                                <div class="list-group-item d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold">{{ client.client__name }}</div>
+                                        <small class="text-muted">{{ client.quotations_count }} cotizaciones</small>
+                                    </div>
+                                    <span class="badge bg-primary rounded-pill">
+                                        {{ client.total_quoted|default:0|currency_format:currency_symbol }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No hay datos disponibles</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Top Vendedores</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if top_salespersons %}
+                            <div class="list-group list-group-flush">
+                                {% for salesperson in top_salespersons %}
+                                <div class="list-group-item d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <div class="fw-bold">{{ salesperson.salesperson__first_name }} {{ salesperson.salesperson__last_name }}</div>
+                                        <small class="text-muted">{{ salesperson.quotations_count }} cotizaciones</small>
+                                    </div>
+                                    <span class="badge bg-success rounded-pill">
+                                        {{ salesperson.total_quoted|default:0|currency_format:currency_symbol }}
+                                    </span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted text-center mb-0">No hay datos disponibles</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Cotizaciones Recientes -->
+        {% if recent_quotations %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Cotizaciones Recientes</h5>
+                <a href="{% url 'quotations:list' %}?company_profile={{ profile.pk }}" class="btn btn-sm btn-outline-primary">
+                    Ver todas
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm table-hover">
+                        <thead>
+                            <tr>
+                                <th>Número</th>
+                                <th>Cliente</th>
+                                <th>Vendedor</th>
+                                <th>Estado</th>
+                                <th>Fecha</th>
+                                <th>Valor</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for quotation in recent_quotations %}
+                            <tr>
+                                <td><strong>{{ quotation.quotation_number }}</strong></td>
+                                <td>{{ quotation.client.name }}</td>
+                                <td>
+                                    {% if quotation.salesperson %}
+                                        {{ quotation.salesperson.full_name }}
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge status-{{ quotation.status }}">
+                                        {{ quotation.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>{{ quotation.created_at|date:"d/m/Y" }}</td>
+                                <td>{{ quotation.total_amount|currency_format:currency_symbol }}</td>
+                                <td>
+                                    <a href="{% url 'quotations:detail' quotation.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- Términos y Condiciones -->
         <div class="card mb-4">
@@ -176,17 +376,65 @@
         <!-- Acciones -->
         <div class="card mb-4">
             <div class="card-header">
-                <h6 class="mb-0">Acciones</h6>
+                <h6 class="mb-0">Acciones Rápidas</h6>
             </div>
             <div class="card-body">
+                <a href="{% url 'quotations:create' %}?company_profile={{ profile.pk }}" class="btn btn-success w-100 mb-2">
+                    <i class="bi bi-plus-circle"></i> Nueva Cotización con esta Empresa
+                </a>
                 <a href="{% url 'core:company_update' profile.pk %}" class="btn btn-warning w-100 mb-2">
                     <i class="bi bi-pencil"></i> Editar Perfil
                 </a>
-                <a href="{% url 'quotations:create' %}" class="btn btn-primary w-100 mb-2">
-                    <i class="bi bi-plus-circle"></i> Nueva Cotización
+                {% if quotations_count > 0 %}
+                <a href="{% url 'quotations:list' %}?company_profile={{ profile.pk }}" class="btn btn-outline-primary w-100 mb-2">
+                    <i class="bi bi-file-text"></i> Ver Todas las Cotizaciones
                 </a>
+                <a href="{% url 'quotations:kanban' %}?company_profile={{ profile.pk }}" class="btn btn-outline-info w-100">
+                    <i class="bi bi-columns-gap"></i> Vista Kanban
+                </a>
+                {% endif %}
             </div>
         </div>
+
+        <!-- Resumen de Rendimiento -->
+        {% if quotations_count > 0 %}
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0">Resumen de Rendimiento</h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <div class="fw-bold text-success">{{ quotation_stats.accepted }}</div>
+                        <div class="small text-muted">Aceptadas</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="fw-bold text-danger">{{ quotation_stats.rejected }}</div>
+                        <div class="small text-muted">Rechazadas</div>
+                    </div>
+                </div>
+                <div class="progress mb-2" style="height: 8px;">
+                    <div class="progress-bar bg-success" role="progressbar" 
+                         style="width: {{ conversion_rate }}%" aria-valuenow="{{ conversion_rate }}" 
+                         aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="text-center">
+                    <small class="text-muted">{{ conversion_rate|floatformat:1 }}% de conversión</small>
+                </div>
+                
+                <hr class="my-3">
+                
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Valor Aceptado:</span>
+                    <span class="fw-bold text-success">{{ accepted_value|currency_format:currency_symbol }}</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="small text-muted">Valor Pendiente:</span>
+                    <span class="fw-bold text-warning">{{ pending_value|currency_format:currency_symbol }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
         
         <!-- Información del Sistema -->
         <div class="card">
@@ -200,6 +448,15 @@
                 <p class="small text-muted mb-0">
                     <strong>Actualizado:</strong> {{ profile.updated_at|date:"d/m/Y H:i" }}
                 </p>
+                {% if quotations_count > 0 %}
+                <hr class="my-2">
+                <p class="small text-muted mb-0">
+                    <strong>Primera cotización:</strong> {{ first_quotation_date|date:"d/m/Y" }}
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Última cotización:</strong> {{ last_quotation_date|date:"d/m/Y" }}
+                </p>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -207,25 +464,60 @@
 {% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/company-profiles.css' %}">
 <style>
-    .card-header h5, .card-header h6 {
-        color: var(--bs-primary);
+    .status-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+        color: white;
+        margin: 0 auto;
     }
     
-    .bg-light.rounded {
-        background-color: #f8f9fa !important;
+    .status-draft { background-color: #6c757d; }
+    .status-sent { background-color: #0dcaf0; }
+    .status-accepted { background-color: #198754; }
+    .status-rejected { background-color: #dc3545; }
+    .status-expired { background-color: #fd7e14; }
+    
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: white;
+        text-transform: uppercase;
     }
     
-    .border {
-        border-color: #dee2e6 !important;
+    .status-badge.status-draft { background-color: #6c757d; }
+    .status-badge.status-sent { background-color: #0dcaf0; }
+    .status-badge.status-accepted { background-color: #198754; }
+    .status-badge.status-rejected { background-color: #dc3545; }
+    .status-badge.status-expired { background-color: #fd7e14; }
+    
+    .card.border-primary { border-width: 2px; }
+    .card.border-success { border-width: 2px; }
+    .card.border-info { border-width: 2px; }
+    .card.border-warning { border-width: 2px; }
+    
+    .list-group-item {
+        border-left: 0;
+        border-right: 0;
+        padding-left: 0;
+        padding-right: 0;
     }
     
-    .social-link {
-        transition: transform 0.2s;
+    .table-hover tbody tr:hover {
+        background-color: rgba(0,0,0,.02);
     }
     
-    .social-link:hover {
-        transform: translateY(-2px);
+    .progress {
+        background-color: #f8f9fa;
     }
 </style>
 {% endblock %} 

@@ -16,6 +16,7 @@ urlpatterns = [
     
     # AJAX endpoints
     path('<int:pk>/update-status/', views.update_quotation_status, name='update_status'),
+    path('get-company-info/<int:company_id>/', views.get_company_info, name='get_company_info'),
     
     # Activity management
     path('<int:quotation_pk>/activities/', views.QuotationActivityListView.as_view(), name='activity_list'),
