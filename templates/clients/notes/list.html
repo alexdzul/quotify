@@ -1,0 +1,359 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if client %}
+        Notas de {{ client.name }}
+    {% else %}
+        Todas las Notas de Clientes
+    {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .note-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #dee2e6;
+    }
+    .note-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .note-card.priority-urgent {
+        border-left-color: #dc3545;
+    }
+    .note-card.priority-high {
+        border-left-color: #fd7e14;
+    }
+    .note-card.priority-medium {
+        border-left-color: #17a2b8;
+    }
+    .note-card.priority-low {
+        border-left-color: #6c757d;
+    }
+    .note-resolved {
+        opacity: 0.7;
+    }
+    .filters-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">
+                        <i class="fas fa-sticky-note text-primary me-2"></i>
+                        {% if client %}
+                            Notas de {{ client.name }}
+                        {% else %}
+                            Todas las Notas
+                        {% endif %}
+                    </h1>
+                    <p class="text-muted mb-0">
+                        {% if client %}
+                            Gestiona las notas internas del cliente
+                        {% else %}
+                            Gestiona todas las notas de clientes
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    {% if client %}
+                        <a href="{% url 'clients:note_create' client_pk=client.pk %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-plus me-1"></i>Nueva Nota
+                        </a>
+                        <a href="{% url 'clients:detail' client.pk %}" 
+                           class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i>Volver al Cliente
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters and Stats -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card filters-card">
+                <div class="card-body">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-filter me-2"></i>Filtros
+                    </h5>
+                    <form method="get" class="row g-3">
+                        <div class="col-md-3">
+                            <select name="type" class="form-select">
+                                <option value="">Todos los tipos</option>
+                                {% for value, label in type_choices %}
+                                    <option value="{{ value }}" 
+                                            {% if current_filters.type == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="priority" class="form-select">
+                                <option value="">Todas las prioridades</option>
+                                {% for value, label in priority_choices %}
+                                    <option value="{{ value }}" 
+                                            {% if current_filters.priority == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select name="status" class="form-select">
+                                <option value="">Todos los estados</option>
+                                <option value="resolved" 
+                                        {% if current_filters.status == 'resolved' %}selected{% endif %}>
+                                    Resueltas
+                                </option>
+                                <option value="unresolved" 
+                                        {% if current_filters.status == 'unresolved' %}selected{% endif %}>
+                                    Pendientes
+                                </option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="input-group">
+                                <input type="text" name="search" class="form-control" 
+                                       placeholder="Buscar..." value="{{ current_filters.search }}">
+                                <button type="submit" class="btn btn-light">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <h5 class="card-title mb-3">
+                        <i class="fas fa-chart-pie me-2"></i>Estadísticas
+                    </h5>
+                    <div class="row">
+                        <div class="col-6">
+                            <h4 class="mb-0">{{ notes|length }}</h4>
+                            <small>Total</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="mb-0">
+                                {{ notes|length|add:"-1"|add:"1" }}
+                            </h4>
+                            <small>Pendientes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notes List -->
+    <div class="row">
+        {% for note in notes %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card note-card priority-{{ note.priority }} {% if note.is_resolved %}note-resolved{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="card-title mb-0">
+                                <a href="{% url 'clients:note_detail' note.pk %}" 
+                                   class="text-decoration-none">
+                                    {{ note.title|truncatechars:30 }}
+                                </a>
+                            </h6>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{% url 'clients:note_detail' note.pk %}">
+                                            <i class="fas fa-eye me-2"></i>Ver
+                                        </a>
+                                    </li>
+                                    {% if user == note.author or user.is_superuser %}
+                                        <li>
+                                            <a class="dropdown-item" 
+                                               href="{% url 'clients:note_update' note.pk %}">
+                                                <i class="fas fa-edit me-2"></i>Editar
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item toggle-resolved" 
+                                                    data-note-id="{{ note.pk }}">
+                                                <i class="fas fa-{% if note.is_resolved %}times{% else %}check{% endif %} me-2"></i>
+                                                {% if note.is_resolved %}Marcar Pendiente{% else %}Marcar Resuelto{% endif %}
+                                            </button>
+                                        </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <span class="badge {{ note.get_priority_badge_class }} me-1">
+                                {{ note.get_priority_display }}
+                            </span>
+                            <span class="badge {{ note.get_type_badge_class }} me-1">
+                                {{ note.get_note_type_display }}
+                            </span>
+                            {% if note.is_private %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-lock me-1"></i>Privada
+                                </span>
+                            {% endif %}
+                            {% if note.is_resolved %}
+                                <span class="badge badge-success">
+                                    <i class="fas fa-check me-1"></i>Resuelta
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <p class="card-text text-muted small mb-2">
+                            {{ note.content|truncatechars:100 }}
+                        </p>
+                        
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">
+                                {% if not client %}
+                                    <strong>{{ note.client.name }}</strong><br>
+                                {% endif %}
+                                Por {{ note.author.get_full_name|default:note.author.username }}
+                            </small>
+                            <small class="text-muted">
+                                {{ note.created_at|date:"d/m/Y" }}
+                            </small>
+                        </div>
+                        
+                        {% if note.follow_up_date %}
+                            <div class="mt-2">
+                                <small class="text-info">
+                                    <i class="fas fa-calendar-alt me-1"></i>
+                                    Seguimiento: {{ note.follow_up_date|date:"d/m/Y" }}
+                                </small>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-body text-center py-5">
+                        <i class="fas fa-sticky-note fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No hay notas disponibles</h5>
+                        <p class="text-muted">
+                            {% if client %}
+                                No se han creado notas para este cliente.
+                            {% else %}
+                                No se han creado notas de clientes.
+                            {% endif %}
+                        </p>
+                        {% if client %}
+                            <a href="{% url 'clients:note_create' client_pk=client.pk %}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Crear Primera Nota
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+        <div class="row">
+            <div class="col-12">
+                <nav aria-label="Paginación de notas">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                    <i class="fas fa-angle-double-left"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                    <i class="fas fa-angle-left"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                        
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+                        
+                        {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                    <i class="fas fa-angle-right"></i>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.type %}&type={{ request.GET.type }}{% endif %}{% if request.GET.priority %}&priority={{ request.GET.priority }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                                    <i class="fas fa-angle-double-right"></i>
+                                </a>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle resolved status
+    document.querySelectorAll('.toggle-resolved').forEach(button => {
+        button.addEventListener('click', function() {
+            const noteId = this.dataset.noteId;
+            
+            fetch(`/clients/notes/${noteId}/toggle-resolved/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar la nota');
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 

@@ -1,0 +1,168 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}Eliminar Nota - {{ note.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+        border-radius: 15px;
+        border-left: 4px solid #dc3545;
+    }
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    .note-preview {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #dee2e6;
+    }
+    .warning-box {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 10px;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card delete-card">
+                <div class="card-header delete-header">
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle fa-2x mb-2"></i>
+                        <h4 class="mb-0">Confirmar Eliminación</h4>
+                        <p class="mb-0 opacity-75">Esta acción no se puede deshacer</p>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Warning Message -->
+                    <div class="warning-box p-3 mb-4">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>¿Estás seguro?</strong>
+                        </div>
+                        <p class="mb-0 small">
+                            Estás a punto de eliminar permanentemente esta nota. 
+                            Una vez eliminada, no podrás recuperar la información.
+                        </p>
+                    </div>
+                    
+                    <!-- Note Preview -->
+                    <div class="note-preview p-3 mb-4">
+                        <h6 class="mb-2">
+                            <i class="fas fa-sticky-note me-1"></i>
+                            Nota a eliminar:
+                        </h6>
+                        
+                        <div class="mb-2">
+                            <strong>{{ note.title }}</strong>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>
+                                Cliente: <strong>{{ note.client.name }}</strong>
+                            </small>
+                        </div>
+                        
+                        <div class="mb-2">
+                            <span class="badge {{ note.get_priority_badge_class }} me-1">
+                                {{ note.get_priority_display }}
+                            </span>
+                            <span class="badge {{ note.get_type_badge_class }} me-1">
+                                {{ note.get_note_type_display }}
+                            </span>
+                            {% if note.is_private %}
+                                <span class="badge badge-warning">
+                                    <i class="fas fa-lock me-1"></i>Privada
+                                </span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="small text-muted">
+                            <p class="mb-1">
+                                <strong>Contenido:</strong> 
+                                {{ note.content|truncatechars:100 }}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Creada:</strong> 
+                                {{ note.created_at|date:"d/m/Y \a \l\a\s H:i" }} 
+                                por {{ note.author.get_full_name|default:note.author.username }}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Deletion Form -->
+                    <form method="post" class="text-center">
+                        {% csrf_token %}
+                        
+                        <div class="d-flex justify-content-center gap-3">
+                            <a href="{% url 'clients:note_detail' note.pk %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-times me-1"></i>Cancelar
+                            </a>
+                            
+                            <button type="submit" class="btn btn-danger">
+                                <i class="fas fa-trash me-1"></i>Sí, Eliminar Nota
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Additional Info -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle text-info me-2"></i>
+                        Información Adicional
+                    </h6>
+                    <ul class="mb-0 small text-muted">
+                        <li>Esta acción eliminará permanentemente la nota del sistema</li>
+                        <li>No afectará al cliente ni a otras notas relacionadas</li>
+                        <li>Solo tú{% if user.is_superuser %} y los administradores{% endif %} pueden eliminar esta nota</li>
+                        <li>Si necesitas conservar la información, considera marcarla como resuelta en lugar de eliminarla</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add confirmation dialog
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const confirmed = confirm(
+                '¿Estás completamente seguro de que deseas eliminar esta nota?\n\n' +
+                'Esta acción NO se puede deshacer.'
+            );
+            
+            if (!confirmed) {
+                e.preventDefault();
+            }
+        });
+    }
+    
+    // Add keyboard shortcut (Escape to cancel)
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            window.location.href = "{% url 'clients:note_detail' note.pk %}";
+        }
+    });
+});
+</script>
+{% endblock %} 

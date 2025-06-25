@@ -1,0 +1,280 @@
+{% extends "base/base.html" %}
+{% load static %}
+
+{% block title %}{{ note.title }} - {{ note.client.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .note-card {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        border: none;
+        border-radius: 15px;
+        border-left: 4px solid #dee2e6;
+    }
+    .note-card.priority-urgent {
+        border-left-color: #dc3545;
+    }
+    .note-card.priority-high {
+        border-left-color: #fd7e14;
+    }
+    .note-card.priority-medium {
+        border-left-color: #17a2b8;
+    }
+    .note-card.priority-low {
+        border-left-color: #6c757d;
+    }
+    .note-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+    }
+    .note-content {
+        white-space: pre-wrap;
+        line-height: 1.6;
+    }
+    .meta-info {
+        background-color: #f8f9fa;
+        border-radius: 10px;
+    }
+    .status-resolved {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+    }
+    .status-pending {
+        background-color: #fff3cd;
+        border-color: #ffeaa7;
+        color: #856404;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Note Card -->
+            <div class="card note-card priority-{{ note.priority }}">
+                <div class="card-header note-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h4 class="mb-1">
+                                <i class="fas fa-sticky-note me-2"></i>
+                                {{ note.title }}
+                            </h4>
+                            <p class="mb-0 opacity-75">
+                                <i class="fas fa-user me-1"></i>
+                                Cliente: <strong>{{ note.client.name }}</strong>
+                            </p>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-light dropdown-toggle" type="button" 
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'clients:detail' note.client.pk %}">
+                                        <i class="fas fa-user me-2"></i>Ver Cliente
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'clients:note_list' client_pk=note.client.pk %}">
+                                        <i class="fas fa-list me-2"></i>Todas las Notas
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                {% if user == note.author or user.is_superuser %}
+                                    <li>
+                                        <a class="dropdown-item" href="{% url 'clients:note_update' note.pk %}">
+                                            <i class="fas fa-edit me-2"></i>Editar Nota
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item toggle-resolved" data-note-id="{{ note.pk }}">
+                                            <i class="fas fa-{% if note.is_resolved %}times{% else %}check{% endif %} me-2"></i>
+                                            {% if note.is_resolved %}Marcar Pendiente{% else %}Marcar Resuelto{% endif %}
+                                        </button>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <a class="dropdown-item text-danger" href="{% url 'clients:note_delete' note.pk %}">
+                                            <i class="fas fa-trash me-2"></i>Eliminar
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-4">
+                    <!-- Status and Badges -->
+                    <div class="mb-4">
+                        <div class="d-flex flex-wrap gap-2">
+                            <span class="badge {{ note.get_priority_badge_class }} fs-6">
+                                <i class="fas fa-exclamation-triangle me-1"></i>
+                                {{ note.get_priority_display }}
+                            </span>
+                            <span class="badge {{ note.get_type_badge_class }} fs-6">
+                                <i class="fas fa-tag me-1"></i>
+                                {{ note.get_note_type_display }}
+                            </span>
+                            {% if note.is_private %}
+                                <span class="badge badge-warning fs-6">
+                                    <i class="fas fa-lock me-1"></i>Privada
+                                </span>
+                            {% endif %}
+                            {% if note.is_resolved %}
+                                <span class="badge badge-success fs-6">
+                                    <i class="fas fa-check me-1"></i>Resuelta
+                                </span>
+                            {% else %}
+                                <span class="badge badge-warning fs-6">
+                                    <i class="fas fa-clock me-1"></i>Pendiente
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="mb-4">
+                        <h6 class="text-muted mb-2">
+                            <i class="fas fa-align-left me-1"></i>Contenido
+                        </h6>
+                        <div class="note-content p-3 bg-light rounded">
+                            {{ note.content }}
+                        </div>
+                    </div>
+                    
+                    <!-- Follow-up Date -->
+                    {% if note.follow_up_date %}
+                        <div class="mb-4">
+                            <div class="alert alert-info">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                <strong>Fecha de seguimiento:</strong> 
+                                {{ note.follow_up_date|date:"l, d F Y" }}
+                                {% if note.follow_up_date < today %}
+                                    <span class="badge badge-danger ms-2">Vencido</span>
+                                {% elif note.follow_up_date == today %}
+                                    <span class="badge badge-warning ms-2">Hoy</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Resolution Status -->
+                    {% if note.is_resolved %}
+                        <div class="alert status-resolved">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <strong>Nota resuelta</strong>
+                            {% if note.resolved_at %}
+                                el {{ note.resolved_at|date:"d/m/Y \a \l\a\s H:i" }}
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="alert status-pending">
+                            <i class="fas fa-clock me-2"></i>
+                            <strong>Nota pendiente</strong> - Requiere atención
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Meta Information -->
+            <div class="card mt-4">
+                <div class="card-body meta-info">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle me-2"></i>Información de la Nota
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Autor:</strong> 
+                                {{ note.author.get_full_name|default:note.author.username }}
+                            </p>
+                            <p class="mb-2">
+                                <strong>Creada:</strong> 
+                                {{ note.created_at|date:"d/m/Y \a \l\a\s H:i" }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <p class="mb-2">
+                                <strong>Última actualización:</strong> 
+                                {{ note.updated_at|date:"d/m/Y \a \l\a\s H:i" }}
+                            </p>
+                            <p class="mb-2">
+                                <strong>Visibilidad:</strong> 
+                                {% if note.is_private %}
+                                    <span class="text-warning">
+                                        <i class="fas fa-lock me-1"></i>Privada
+                                    </span>
+                                {% else %}
+                                    <span class="text-success">
+                                        <i class="fas fa-users me-1"></i>Pública
+                                    </span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="d-flex justify-content-between mt-4">
+                <div>
+                    <a href="{% url 'clients:note_list' client_pk=note.client.pk %}" 
+                       class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>Volver a Notas
+                    </a>
+                    <a href="{% url 'clients:detail' note.client.pk %}" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-user me-1"></i>Ver Cliente
+                    </a>
+                </div>
+                {% if user == note.author or user.is_superuser %}
+                    <div>
+                        <a href="{% url 'clients:note_update' note.pk %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-edit me-1"></i>Editar
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Toggle resolved status
+    document.querySelectorAll('.toggle-resolved').forEach(button => {
+        button.addEventListener('click', function() {
+            const noteId = this.dataset.noteId;
+            
+            fetch(`/clients/notes/${noteId}/toggle-resolved/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error al actualizar la nota');
+            });
+        });
+    });
+});
+</script>
+{% endblock %} 
