@@ -133,7 +133,7 @@ class CompanyProfileAdmin(admin.ModelAdmin):
     
     fieldsets = (
         ('Información Básica', {
-            'fields': ('name', 'email', 'phone', 'website')
+            'fields': ('name', 'slogan', 'email', 'phone', 'website')
         }),
         ('Dirección', {
             'fields': ('address',)

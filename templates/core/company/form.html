@@ -57,6 +57,21 @@
                     </div>
                     
                     <div class="row">
+                        <div class="col-md-12">
+                            <div class="mb-3">
+                                <label for="{{ form.slogan.id_for_label }}" class="form-label">
+                                    Slogan de la Empresa
+                                </label>
+                                {{ form.slogan|add_class:"form-control" }}
+                                {% if form.slogan.errors %}
+                                    <div class="text-danger small mt-1">{{ form.slogan.errors.0 }}</div>
+                                {% endif %}
+                                <div class="form-text">Slogan que aparecerá en la portada de las cotizaciones (ej: "NUESTRO COMPROMISO: SU JARDÍN")</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label for="{{ form.logo.id_for_label }}" class="form-label">Logo</label>
@@ -269,6 +284,9 @@
                     </p>
                     <p class="small text-muted mb-2">
                         <i class="bi bi-card-image"></i> La imagen de portada aparecerá en las cotizaciones cuando no haya imagen de servicio.
+                    </p>
+                    <p class="small text-muted mb-2">
+                        <i class="bi bi-quote"></i> El slogan aparecerá en la portada de todas las cotizaciones de esta empresa.
                     </p>
                     <p class="small text-muted mb-0">
                         <i class="bi bi-percent"></i> La tasa de impuesto se puede cambiar individualmente en cada cotización.

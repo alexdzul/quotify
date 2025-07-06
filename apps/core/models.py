@@ -130,6 +130,14 @@ class CompanyProfile(models.Model):
         help_text="Imagen principal que aparecerá en la portada de las cotizaciones"
     )
     
+    # Company slogan for quotations
+    slogan = models.CharField(
+        max_length=200,
+        blank=True,
+        verbose_name="Slogan de la Empresa",
+        help_text="Slogan que aparecerá en la portada de las cotizaciones (ej: 'NUESTRO COMPROMISO: SU JARDÍN')"
+    )
+    
     # Default values
     default_tax_rate = models.DecimalField(
         max_digits=5, 

@@ -404,7 +404,7 @@ class CompanyProfileCreateView(LoginRequiredMixin, CreateView):
     model = CompanyProfile
     template_name = 'core/company/form.html'
     fields = [
-        'name', 'address', 'phone', 'email', 'website',
+        'name', 'slogan', 'address', 'phone', 'email', 'website',
         'facebook_url', 'instagram_url', 'tiktok_url', 'logo', 'cover_image',
         'default_tax_rate', 'default_payment_terms', 'terms_and_conditions'
     ]
@@ -418,7 +418,7 @@ class CompanyProfileUpdateView(LoginRequiredMixin, UpdateView):
     model = CompanyProfile
     template_name = 'core/company/form.html'
     fields = [
-        'name', 'address', 'phone', 'email', 'website',
+        'name', 'slogan', 'address', 'phone', 'email', 'website',
         'facebook_url', 'instagram_url', 'tiktok_url', 'logo', 'cover_image',
         'default_tax_rate', 'default_payment_terms', 'terms_and_conditions'
     ]
