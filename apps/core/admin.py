@@ -141,8 +141,8 @@ class CompanyProfileAdmin(admin.ModelAdmin):
         ('Redes Sociales', {
             'fields': ('facebook_url', 'instagram_url', 'tiktok_url')
         }),
-        ('Logo', {
-            'fields': ('logo',)
+        ('Imágenes', {
+            'fields': ('logo', 'cover_image')
         }),
         ('Configuraciones por Defecto', {
             'fields': ('default_tax_rate', 'default_payment_terms')

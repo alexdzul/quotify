@@ -121,6 +121,15 @@ class CompanyProfile(models.Model):
         verbose_name="Logo"
     )
     
+    # Cover image for quotations
+    cover_image = models.ImageField(
+        upload_to='company/covers/',
+        blank=True,
+        null=True,
+        verbose_name="Imagen de Portada",
+        help_text="Imagen principal que aparecerá en la portada de las cotizaciones"
+    )
+    
     # Default values
     default_tax_rate = models.DecimalField(
         max_digits=5, 

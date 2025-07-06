@@ -7,14 +7,73 @@
     <title>Cotización {{ quotation.quotation_number }}</title>
 </head>
 <body data-quotation-number="{{ quotation.quotation_number }}">
-    <!-- HEADER CON INFORMACIÓN DE LA EMPRESA -->
-    <div class="header">
-        {% if company_logo_url %}
-            <img src="{{ company_logo_url }}" alt="{{ company_profile.name }}" class="company-logo">
-        {% endif %}
-        <h1>{{ company_profile.name|default:"Total Garden & Pool" }}</h1>
+    <!-- PORTADA -->
+    <div class="cover-page">
+        <!-- Header con logo y fecha -->
+        <div class="cover-header">
+            <div class="cover-logo">
+                {% if company_logo_url %}
+                    <img src="{{ company_logo_url }}" alt="{{ company_profile.name }}">
+                {% endif %}
+            </div>
+            <div class="cover-date">
+                <div class="date-month">{{ quotation.quotation_date|date:"F"|upper }}</div>
+                <div class="date-year">{{ quotation.quotation_date|date:"Y" }}</div>
+            </div>
+        </div>
+
+        <!-- Título principal -->
+        <div class="cover-title">
+            <h1>Cotización: <span class="quote-number">{{ quotation.quotation_number }}</span></h1>
+            <div class="cover-subtitle">
+                {% if quotation.items.all %}
+                    {% for item in quotation.items.all %}
+                        {{ item.service.category.name|default:item.service.name }}{% if not forloop.last %}-{% endif %}
+                    {% endfor %}
+                {% else %}
+                    Riego-Pasto-Paisajismo-Iluminación
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Banda de compromiso -->
+        <div class="commitment-banner">
+            <div class="commitment-text">NUESTRO COMPROMISO: SU JARDÍN</div>
+        </div>
+
+        <!-- Imagen principal -->
+        <div class="cover-image">
+            {% if company_cover_image_url %}
+                <img src="{{ company_cover_image_url }}" alt="Imagen de portada - {{ company_profile.name }}">
+            {% elif items_with_urls.0.display_image_url %}
+                <img src="{{ items_with_urls.0.display_image_url }}" alt="Jardín">
+            {% else %}
+                <!-- Imagen por defecto si no hay imagen de portada ni del servicio -->
+                <div class="default-image">
+                    <div class="default-content">
+                        <h2>{{ company_profile.name|default:"Total Garden & Pool" }}</h2>
+                        <p>Servicios de Jardinería y Paisajismo</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Footer con website -->
+        <div class="cover-footer">
+            <div class="website">
+                {% if company_profile.website %}
+                    {{ company_profile.website }}
+                {% else %}
+                    www.totalgarden.com.mx
+                {% endif %}
+            </div>
+            <div class="store-info">@store on line</div>
+        </div>
     </div>
 
+    <!-- NUEVA PÁGINA - INFORMACIÓN DETALLADA -->
+    <div class="page-break"></div>
+    
     <!-- INFORMACIÓN CORPORATIVA -->
     <div class="company-info">
         <h2>Información de la Empresa</h2>
@@ -106,14 +165,18 @@
                 </div>
             </div>
 
-            <!-- Imágenes adicionales de la galería del servicio -->
+            <!-- Galería de fotos del servicio -->
             {% if item_data.service_images %}
-                <div style="margin-top: 20px;">
-                    <h4>Galería de Imágenes</h4>
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                <div class="service-gallery">
+                    <h5>Galería de Fotos del Servicio</h5>
+                    <div class="gallery-grid">
                         {% for image in item_data.service_images %}
-                            <img src="{{ image.url }}" alt="{{ image.caption }}" 
-                                 style="width: 120px; height: 90px; object-fit: cover; border-radius: 5px;">
+                            <div class="gallery-item">
+                                <img src="{{ image.url }}" alt="{{ image.caption }}">
+                                {% if image.caption %}
+                                    <div class="caption">{{ image.caption }}</div>
+                                {% endif %}
+                            </div>
                         {% endfor %}
                     </div>
                 </div>

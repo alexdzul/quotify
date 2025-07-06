@@ -793,11 +793,11 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
                 'service_images': []
             }
             
-            # Agregar URLs absolutas para imágenes de la galería del servicio
-            for img in item.service.gallery_images.all()[:4]:  # Máximo 4 imágenes
+            # Agregar URLs absolutas para todas las imágenes de la galería del servicio
+            for img in item.service.gallery_images.all():
                 item_data['service_images'].append({
                     'url': request.build_absolute_uri(img.image.url),
-                    'caption': img.caption
+                    'caption': img.caption or 'Imagen del servicio'
                 })
             
             items_with_absolute_urls.append(item_data)
@@ -807,6 +807,7 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             'quotation': quotation,
             'company_profile': company_profile,
             'company_logo_url': request.build_absolute_uri(company_profile.logo.url) if company_profile and company_profile.logo else None,
+            'company_cover_image_url': request.build_absolute_uri(company_profile.cover_image.url) if company_profile and company_profile.cover_image else None,
             'salesperson_photo_url': request.build_absolute_uri(quotation.salesperson.profile_photo.url) if quotation.salesperson and quotation.salesperson.profile_photo else None,
             'items_with_urls': items_with_absolute_urls,
             'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),
@@ -822,13 +823,7 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
         css_string = """
         @page {
             size: A4;
-            margin: 1cm;
-            @top-center {
-                content: "Cotización " attr(data-quotation-number);
-            }
-            @bottom-center {
-                content: "Página " counter(page) " de " counter(pages);
-            }
+            margin: 0;
         }
         
         body {
@@ -836,18 +831,173 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             font-size: 11pt;
             line-height: 1.4;
             color: #333;
+            margin: 0;
+            padding: 0;
         }
         
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #2c5f2d;
-            padding-bottom: 20px;
+        /* ESTILOS PARA LA PORTADA */
+        .cover-page {
+            width: 100%;
+            height: 297mm;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            page-break-after: always;
         }
         
-        .company-logo {
+        .cover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 30px 40px;
+            height: 120px;
+        }
+        
+        .cover-logo img {
             max-height: 80px;
-            margin-bottom: 10px;
+            max-width: 200px;
+        }
+        
+        .cover-date {
+            background: #F5E6A3;
+            padding: 15px 25px;
+            border-radius: 0 0 0 15px;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .date-month {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c5f2d;
+            margin-bottom: 5px;
+        }
+        
+        .date-year {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c5f2d;
+        }
+        
+        .cover-title {
+            text-align: center;
+            margin: 40px 0 20px 0;
+            background: #e9ecef;
+            padding: 40px;
+            border-radius: 15px;
+            margin-left: 40px;
+            margin-right: 40px;
+        }
+        
+        .cover-title h1 {
+            font-size: 42px;
+            color: #333;
+            margin: 0;
+            font-weight: normal;
+        }
+        
+        .quote-number {
+            font-weight: bold;
+            color: #2c5f2d;
+        }
+        
+        .cover-subtitle {
+            font-size: 22px;
+            color: #8B4513;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        
+        .commitment-banner {
+            background: #F5E6A3;
+            padding: 15px 0;
+            margin: 30px 0;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .commitment-text {
+            font-size: 18px;
+            font-weight: bold;
+            color: #2c5f2d;
+            letter-spacing: 1px;
+        }
+        
+        .cover-image {
+            flex-grow: 1;
+            margin: 0 40px;
+            margin-bottom: 80px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .cover-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .default-image {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #2c5f2d 0%, #4a7c59 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+        
+        .default-content h2 {
+            font-size: 32px;
+            margin: 0 0 10px 0;
+        }
+        
+        .default-content p {
+            font-size: 18px;
+            margin: 0;
+        }
+        
+        .cover-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.8);
+            margin-top: auto;
+        }
+        
+        .website {
+            font-size: 16px;
+            color: #2c5f2d;
+            font-weight: bold;
+        }
+        
+        .store-info {
+            font-size: 14px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        
+        /* SALTO DE PÁGINA */
+        .page-break {
+            page-break-before: always;
+        }
+        
+        /* ESTILOS PARA CONTENIDO INTERNO */
+        .company-info,
+        .quotation-info,
+        .service-section,
+        .totals-section,
+        .terms-section,
+        .items-table,
+        h2 {
+            margin-left: 20px;
+            margin-right: 20px;
         }
         
         .company-info {
@@ -856,6 +1006,7 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
+            margin-top: 20px;
         }
         
         .quotation-info {
@@ -904,6 +1055,46 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
         
         .service-description {
             flex: 1;
+        }
+        
+        .service-gallery {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .service-gallery h5 {
+            color: #2c5f2d;
+            margin-bottom: 10px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+        }
+        
+        .gallery-item {
+            text-align: center;
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #dee2e6;
+        }
+        
+        .gallery-item .caption {
+            font-size: 10px;
+            color: #666;
+            margin-top: 3px;
+            font-style: italic;
         }
         
         .items-table {
@@ -1038,11 +1229,11 @@ class QuotationPreviewView(LoginRequiredMixin, DetailView):
                 'service_images': []
             }
             
-            # Agregar imágenes de la galería del servicio
-            for img in item.service.gallery_images.all()[:4]:  # Máximo 4 imágenes
+            # Agregar todas las imágenes de la galería del servicio
+            for img in item.service.gallery_images.all():
                 item_data['service_images'].append({
                     'url': img.image.url,
-                    'caption': img.caption
+                    'caption': img.caption or 'Imagen del servicio'
                 })
             
             items_with_urls.append(item_data)
@@ -1050,6 +1241,7 @@ class QuotationPreviewView(LoginRequiredMixin, DetailView):
         context.update({
             'company_profile': company_profile,
             'company_logo_url': company_profile.logo.url if company_profile and company_profile.logo else None,
+            'company_cover_image_url': company_profile.cover_image.url if company_profile and company_profile.cover_image else None,
             'salesperson_photo_url': quotation.salesperson.profile_photo.url if quotation.salesperson and quotation.salesperson.profile_photo else None,
             'items_with_urls': items_with_urls,
             'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),
