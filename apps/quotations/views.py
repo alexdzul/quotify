@@ -809,6 +809,7 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             'company_logo_url': request.build_absolute_uri(company_profile.logo.url) if company_profile and company_profile.logo else None,
             'company_cover_image_url': request.build_absolute_uri(company_profile.cover_image.url) if company_profile and company_profile.cover_image else None,
             'company_slogan': company_profile.slogan if company_profile and company_profile.slogan else "NUESTRO COMPROMISO: SU JARDÍN",
+            'company_brand_color': company_profile.brand_color if company_profile and company_profile.brand_color else "#2c5f2d",
             'salesperson_photo_url': request.build_absolute_uri(quotation.salesperson.profile_photo.url) if quotation.salesperson and quotation.salesperson.profile_photo else None,
             'items_with_urls': items_with_absolute_urls,
             'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),
@@ -820,24 +821,48 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
         # Configurar WeasyPrint
         font_config = FontConfiguration()
         
-        # CSS para el PDF
-        css_string = """
-        @page {
+        # Función para generar colores más claros y oscuros
+        def lighten_color(hex_color, amount=0.3):
+            """Hace un color más claro"""
+            hex_color = hex_color.lstrip('#')
+            r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+            r = min(255, int(r + (255 - r) * amount))
+            g = min(255, int(g + (255 - g) * amount))
+            b = min(255, int(b + (255 - b) * amount))
+            return f"#{r:02x}{g:02x}{b:02x}"
+        
+        def darken_color(hex_color, amount=0.2):
+            """Hace un color más oscuro"""
+            hex_color = hex_color.lstrip('#')
+            r, g, b = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+            r = max(0, int(r * (1 - amount)))
+            g = max(0, int(g * (1 - amount)))
+            b = max(0, int(b * (1 - amount)))
+            return f"#{r:02x}{g:02x}{b:02x}"
+        
+        # Generar colores basados en el color de la empresa
+        brand_color = context['company_brand_color']
+        brand_light = lighten_color(brand_color, 0.5)
+        brand_dark = darken_color(brand_color, 0.1)
+        
+        # CSS dinámico para el PDF
+        css_string = f"""
+        @page {{
             size: A4;
             margin: 0;
-        }
+        }}
         
-        body {
+        body {{
             font-family: 'Arial', sans-serif;
             font-size: 11pt;
             line-height: 1.4;
             color: #333;
             margin: 0;
             padding: 0;
-        }
+        }}
         
         /* ESTILOS PARA LA PORTADA */
-        .cover-page {
+        .cover-page {{
             width: 100%;
             height: 297mm;
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
@@ -845,43 +870,43 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             display: flex;
             flex-direction: column;
             page-break-after: always;
-        }
+        }}
         
-        .cover-header {
+        .cover-header {{
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
             padding: 30px 40px;
             height: 120px;
-        }
+        }}
         
-        .cover-logo img {
+        .cover-logo img {{
             max-height: 80px;
             max-width: 200px;
-        }
+        }}
         
-        .cover-date {
+        .cover-date {{
             background: #F5E6A3;
             padding: 15px 25px;
             border-radius: 0 0 0 15px;
             text-align: center;
             min-width: 100px;
-        }
+        }}
         
-        .date-month {
+        .date-month {{
             font-size: 18px;
             font-weight: bold;
-            color: #2c5f2d;
+            color: {brand_color};
             margin-bottom: 5px;
-        }
+        }}
         
-        .date-year {
+        .date-year {{
             font-size: 24px;
             font-weight: bold;
-            color: #2c5f2d;
-        }
+            color: {brand_color};
+        }}
         
-        .cover-title {
+        .cover-title {{
             text-align: center;
             margin: 40px 0 20px 0;
             background: #e9ecef;
@@ -889,105 +914,105 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             border-radius: 15px;
             margin-left: 40px;
             margin-right: 40px;
-        }
+        }}
         
-        .cover-title h1 {
+        .cover-title h1 {{
             font-size: 42px;
             color: #333;
             margin: 0;
             font-weight: normal;
-        }
+        }}
         
-        .quote-number {
+        .quote-number {{
             font-weight: bold;
-            color: #2c5f2d;
-        }
+            color: {brand_color};
+        }}
         
-        .cover-subtitle {
+        .cover-subtitle {{
             font-size: 22px;
             color: #8B4513;
             margin-top: 15px;
             font-weight: 500;
-        }
+        }}
         
-        .commitment-banner {
+        .commitment-banner {{
             background: #F5E6A3;
             padding: 15px 0;
             margin: 30px 0;
             text-align: center;
             width: 100%;
-        }
+        }}
         
-        .commitment-text {
+        .commitment-text {{
             font-size: 18px;
             font-weight: bold;
-            color: #2c5f2d;
+            color: {brand_color};
             letter-spacing: 1px;
-        }
+        }}
         
-        .cover-image {
+        .cover-image {{
             flex-grow: 1;
             margin: 0 40px;
             margin-bottom: 80px;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
+        }}
         
-        .cover-image img {
+        .cover-image img {{
             width: 100%;
             height: 100%;
             object-fit: cover;
-        }
+        }}
         
-        .default-image {
+        .default-image {{
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, #2c5f2d 0%, #4a7c59 100%);
+            background: linear-gradient(135deg, {brand_color} 0%, {brand_dark} 100%);
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
             text-align: center;
-        }
+        }}
         
-        .default-content h2 {
+        .default-content h2 {{
             font-size: 32px;
             margin: 0 0 10px 0;
-        }
+        }}
         
-        .default-content p {
+        .default-content p {{
             font-size: 18px;
             margin: 0;
-        }
+        }}
         
-        .cover-footer {
+        .cover-footer {{
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 20px 40px;
             background: rgba(255, 255, 255, 0.8);
             margin-top: auto;
-        }
+        }}
         
-        .website {
+        .website {{
             font-size: 16px;
-            color: #2c5f2d;
+            color: {brand_color};
             font-weight: bold;
-        }
+        }}
         
-        .store-info {
+        .store-info {{
             font-size: 14px;
             color: #666;
             background: #f8f9fa;
             padding: 5px 10px;
             border-radius: 10px;
-        }
+        }}
         
         /* SALTO DE PÁGINA */
-        .page-break {
+        .page-break {{
             page-break-before: always;
-        }
+        }}
         
         /* ESTILOS PARA CONTENIDO INTERNO */
         .company-info,
@@ -996,205 +1021,205 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
         .totals-section,
         .terms-section,
         .items-table,
-        h2 {
+        h2 {{
             margin-left: 20px;
             margin-right: 20px;
-        }
+        }}
         
-        .company-info {
-            background: linear-gradient(135deg, #2c5f2d, #4a7c59);
+        .company-info {{
+            background: linear-gradient(135deg, {brand_color}, {brand_dark});
             color: white;
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 30px;
             margin-top: 20px;
-        }
+        }}
         
-        .quotation-info {
+        .quotation-info {{
             background: #f8f9fa;
             padding: 15px;
-            border-left: 4px solid #2c5f2d;
+            border-left: 4px solid {brand_color};
             margin-bottom: 25px;
-        }
+        }}
         
-        .client-info {
+        .client-info {{
             background: #fff;
             border: 1px solid #dee2e6;
             padding: 15px;
             border-radius: 5px;
             margin-bottom: 25px;
-        }
+        }}
         
-        .service-section {
+        .service-section {{
             margin-bottom: 40px;
             page-break-inside: avoid;
-        }
+        }}
         
-        .service-header {
-            background: #2c5f2d;
+        .service-header {{
+            background: {brand_color};
             color: white;
             padding: 15px;
             margin-bottom: 15px;
-        }
+        }}
         
-        .service-content {
+        .service-content {{
             display: flex;
             gap: 20px;
             margin-bottom: 20px;
-        }
+        }}
         
-        .service-image {
+        .service-image {{
             flex: 0 0 200px;
-        }
+        }}
         
-        .service-image img {
+        .service-image img {{
             width: 100%;
             height: 150px;
             object-fit: cover;
             border-radius: 5px;
-        }
+        }}
         
-        .service-description {
+        .service-description {{
             flex: 1;
-        }
+        }}
         
-        .service-gallery {
+        .service-gallery {{
             margin: 15px 0;
             padding: 10px;
             background: #f8f9fa;
             border-radius: 5px;
             border: 1px solid #dee2e6;
-        }
+        }}
         
-        .service-gallery h5 {
-            color: #2c5f2d;
+        .service-gallery h5 {{
+            color: {brand_color};
             margin-bottom: 10px;
             font-size: 14px;
             font-weight: bold;
-        }
+        }}
         
-        .gallery-grid {
+        .gallery-grid {{
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 8px;
-        }
+        }}
         
-        .gallery-item {
+        .gallery-item {{
             text-align: center;
-        }
+        }}
         
-        .gallery-item img {
+        .gallery-item img {{
             width: 100%;
             height: 90px;
             object-fit: cover;
             border-radius: 4px;
             border: 1px solid #dee2e6;
-        }
+        }}
         
-        .gallery-item .caption {
+        .gallery-item .caption {{
             font-size: 10px;
             color: #666;
             margin-top: 3px;
             font-style: italic;
-        }
+        }}
         
-        .items-table {
+        .items-table {{
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 30px;
-        }
+        }}
         
         .items-table th,
-        .items-table td {
+        .items-table td {{
             border: 1px solid #dee2e6;
             padding: 12px;
             text-align: left;
-        }
+        }}
         
-        .items-table th {
-            background: #2c5f2d;
+        .items-table th {{
+            background: {brand_color};
             color: white;
             font-weight: bold;
-        }
+        }}
         
-        .items-table tbody tr:nth-child(even) {
+        .items-table tbody tr:nth-child(even) {{
             background: #f8f9fa;
-        }
+        }}
         
-        .totals-section {
+        .totals-section {{
             background: #f8f9fa;
             padding: 20px;
             border-radius: 5px;
             margin-bottom: 30px;
-        }
+        }}
         
-        .totals-table {
+        .totals-table {{
             width: 300px;
             margin-left: auto;
-        }
+        }}
         
-        .totals-table td {
+        .totals-table td {{
             padding: 8px;
             border-bottom: 1px solid #dee2e6;
-        }
+        }}
         
-        .total-final {
+        .total-final {{
             font-weight: bold;
             font-size: 1.2em;
-            background: #2c5f2d;
+            background: {brand_color};
             color: white;
-        }
+        }}
         
-        .terms-section {
+        .terms-section {{
             page-break-before: always;
             margin-bottom: 30px;
-        }
+        }}
         
-        .terms-section h2 {
-            color: #2c5f2d;
-            border-bottom: 2px solid #2c5f2d;
+        .terms-section h2 {{
+            color: {brand_color};
+            border-bottom: 2px solid {brand_color};
             padding-bottom: 10px;
-        }
+        }}
         
-        .terms-content {
+        .terms-content {{
             background: #fff;
             padding: 20px;
             border: 1px solid #dee2e6;
             border-radius: 5px;
             white-space: pre-line;
-        }
+        }}
         
-        .social-footer {
+        .social-footer {{
             page-break-before: always;
             text-align: center;
-            background: linear-gradient(135deg, #2c5f2d, #4a7c59);
+            background: linear-gradient(135deg, {brand_color}, {brand_dark});
             color: white;
             padding: 40px;
             border-radius: 10px;
-        }
+        }}
         
-        .social-links {
+        .social-links {{
             margin-top: 20px;
-        }
+        }}
         
-        .social-links a {
+        .social-links a {{
             color: white;
             text-decoration: none;
             margin: 0 10px;
             font-weight: bold;
-        }
+        }}
         
-        .text-right {
+        .text-right {{
             text-align: right;
-        }
+        }}
         
-        .text-center {
+        .text-center {{
             text-align: center;
-        }
+        }}
         
-        .page-break {
+        .page-break {{
             page-break-before: always;
-        }
+        }}
         """
         
         # Crear el PDF
@@ -1244,6 +1269,7 @@ class QuotationPreviewView(LoginRequiredMixin, DetailView):
             'company_logo_url': company_profile.logo.url if company_profile and company_profile.logo else None,
             'company_cover_image_url': company_profile.cover_image.url if company_profile and company_profile.cover_image else None,
             'company_slogan': company_profile.slogan if company_profile and company_profile.slogan else "NUESTRO COMPROMISO: SU JARDÍN",
+            'company_brand_color': company_profile.brand_color if company_profile and company_profile.brand_color else "#2c5f2d",
             'salesperson_photo_url': quotation.salesperson.profile_photo.url if quotation.salesperson and quotation.salesperson.profile_photo else None,
             'items_with_urls': items_with_urls,
             'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),

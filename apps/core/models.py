@@ -138,6 +138,30 @@ class CompanyProfile(models.Model):
         help_text="Slogan que aparecerá en la portada de las cotizaciones (ej: 'NUESTRO COMPROMISO: SU JARDÍN')"
     )
     
+    # Company brand color for quotations
+    COLOR_CHOICES = [
+        ('#2c5f2d', 'Verde (Predeterminado)'),
+        ('#1e3a8a', 'Azul'),
+        ('#7c3aed', 'Morado'),
+        ('#dc2626', 'Rojo'),
+        ('#ea580c', 'Naranja'),
+        ('#0891b2', 'Cian'),
+        ('#059669', 'Esmeralda'),
+        ('#7c2d12', 'Café'),
+        ('#374151', 'Gris'),
+        ('#be123c', 'Rosa'),
+        ('#4338ca', 'Índigo'),
+        ('#a21caf', 'Fucsia'),
+    ]
+    
+    brand_color = models.CharField(
+        max_length=7,
+        choices=COLOR_CHOICES,
+        default='#2c5f2d',
+        verbose_name="Color de la Empresa",
+        help_text="Color principal que se utilizará en las cotizaciones de esta empresa"
+    )
+    
     # Default values
     default_tax_rate = models.DecimalField(
         max_digits=5, 
