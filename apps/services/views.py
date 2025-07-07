@@ -82,6 +82,15 @@ class ServiceCategoryUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Categoría actualizada exitosamente.')
         return super().form_valid(form)
 
+class ServiceCategoryDeleteView(LoginRequiredMixin, DeleteView):
+    model = ServiceCategory
+    template_name = 'services/category_delete.html'
+    success_url = reverse_lazy('services:category_list')
+    
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Categoría eliminada exitosamente.')
+        return super().delete(request, *args, **kwargs)
+
 # Vistas para Galería de Servicios
 class ServiceGalleryView(LoginRequiredMixin, TemplateView):
     template_name = 'services/gallery.html'

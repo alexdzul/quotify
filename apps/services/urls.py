@@ -20,4 +20,5 @@ urlpatterns = [
     path('categories/', views.ServiceCategoryListView.as_view(), name='category_list'),
     path('categories/create/', views.ServiceCategoryCreateView.as_view(), name='category_create'),
     path('categories/<int:pk>/edit/', views.ServiceCategoryUpdateView.as_view(), name='category_update'),
+    path('categories/<int:pk>/delete/', views.ServiceCategoryDeleteView.as_view(), name='category_delete'),
 ] 

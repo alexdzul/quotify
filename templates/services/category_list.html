@@ -34,6 +34,9 @@
                                 <a href="{% url 'services:category_update' category.pk %}" class="btn btn-outline-warning" title="Editar">
                                     <i class="bi bi-pencil"></i>
                                 </a>
+                                <a href="{% url 'services:category_delete' category.pk %}" class="btn btn-outline-danger" title="Eliminar">
+                                    <i class="bi bi-trash"></i>
+                                </a>
                             </div>
                         </td>
                     </tr>

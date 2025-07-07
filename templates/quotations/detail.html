@@ -211,6 +211,60 @@
             </div>
         </div>
 
+        <!-- Evidencia Fotográfica -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-camera"></i> Evidencia Fotográfica ({{ quotation.photographic_report.count }})
+                </h5>
+                <button class="btn btn-primary btn-sm" onclick="openPhotoUploadModal()">
+                    <i class="bi bi-plus-circle"></i> Agregar Fotos
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="photographicGallery">
+                    {% if quotation.photographic_report.exists %}
+                        <div class="row g-3">
+                            {% for photo in quotation.photographic_report.all %}
+                                <div class="col-md-4 photo-item" data-photo-id="{{ photo.pk }}">
+                                    <div class="card h-100">
+                                        <img src="{{ photo.image.url }}" class="card-img-top" alt="{{ photo.display_title }}" style="height: 200px; object-fit: cover;">
+                                        <div class="card-body p-2">
+                                            <h6 class="card-title small mb-1">{{ photo.display_title }}</h6>
+                                            <p class="card-text small text-muted mb-1">
+                                                <span class="badge bg-secondary">{{ photo.get_photo_type_display }}</span>
+                                                {% if photo.location_description %}
+                                                    <br>📍 {{ photo.location_description }}
+                                                {% endif %}
+                                            </p>
+                                            <small class="text-muted">{{ photo.photo_date|date:"d/m/Y" }}</small>
+                                        </div>
+                                        <div class="card-footer p-2 d-flex justify-content-between align-items-center">
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewPhoto({{ photo.pk }})">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger" onclick="deletePhoto({{ photo.pk }})">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4" id="emptyPhotoState">
+                            <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
+                            <h6 class="text-muted mt-2">No hay fotos de evidencia</h6>
+                            <p class="text-muted small">Sube fotos para documentar el proceso</p>
+                            <button class="btn btn-primary" onclick="openPhotoUploadModal()">
+                                <i class="bi bi-plus-circle"></i> Subir Primera Foto
+                            </button>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
         <!-- Historial de Actividades -->
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
@@ -396,6 +450,78 @@
         </div>
     </div>
 </div>
+
+<!-- Modal para Subir Fotos -->
+<div class="modal fade" id="photoUploadModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Subir Evidencia Fotográfica</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="photoUploadForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="photoFiles" class="form-label">Seleccionar Fotos</label>
+                        <input type="file" class="form-control" id="photoFiles" name="photos" multiple accept="image/*" required>
+                        <div class="form-text">Puedes seleccionar múltiples fotos a la vez</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="photoType" class="form-label">Tipo de Evidencia</label>
+                        <select class="form-select" name="photo_type" id="photoType">
+                            <option value="before" selected>Antes de los Trabajos</option>
+                            <option value="during">Durante los Trabajos</option>
+                            <option value="after">Después de los Trabajos</option>
+                            <option value="measurements">Medidas y Planos</option>
+                            <option value="terrain">Estado del Terreno</option>
+                            <option value="existing">Elementos Existentes</option>
+                            <option value="access">Accesos y Espacios</option>
+                            <option value="reference">Fotos de Referencia</option>
+                            <option value="other">Otras</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="locationDescription" class="form-label">Ubicación</label>
+                        <input type="text" class="form-control" name="location_description" id="locationDescription" placeholder="Ej: Jardín trasero, Entrada principal">
+                    </div>
+                    <div class="mb-3">
+                        <label for="photoDescription" class="form-label">Descripción General</label>
+                        <textarea class="form-control" name="description" id="photoDescription" rows="3" placeholder="Descripción general que se aplicará a todas las fotos"></textarea>
+                    </div>
+                    <div class="progress mb-3" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload"></i> Subir Fotos
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Ver Foto -->
+<div class="modal fade" id="photoViewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="photoViewTitle">Vista de Foto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="photoViewImage" src="" class="img-fluid" alt="Foto de evidencia">
+                <div id="photoViewDetails" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_css %}
@@ -493,5 +619,149 @@ function scheduleFollowUp() {
     document.body.appendChild(form);
     form.submit();
 }
+
+// Funciones para evidencia fotográfica
+function openPhotoUploadModal() {
+    const modal = new bootstrap.Modal(document.getElementById('photoUploadModal'));
+    modal.show();
+}
+
+function viewPhoto(photoId) {
+    // Obtener detalles de la foto via AJAX
+    fetch(`{% url 'quotations:photo_detail' quotation.pk 0 %}`.replace('0', photoId))
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('photoViewTitle').textContent = data.title;
+            document.getElementById('photoViewImage').src = data.image_url;
+            document.getElementById('photoViewDetails').innerHTML = `
+                <div class="text-start">
+                    <p><strong>Tipo:</strong> ${data.photo_type}</p>
+                    <p><strong>Fecha:</strong> ${data.photo_date}</p>
+                    ${data.location_description ? `<p><strong>Ubicación:</strong> ${data.location_description}</p>` : ''}
+                    ${data.description ? `<p><strong>Descripción:</strong> ${data.description}</p>` : ''}
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('photoViewModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error al cargar la foto:', error);
+            alert('Error al cargar la foto');
+        });
+}
+
+function deletePhoto(photoId) {
+    if (confirm('¿Estás seguro de que deseas eliminar esta foto?')) {
+        fetch(`{% url 'quotations:photo_delete' quotation.pk 0 %}`.replace('0', photoId), {
+            method: 'DELETE',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Eliminar la foto del DOM
+                const photoElement = document.querySelector(`[data-photo-id="${photoId}"]`);
+                if (photoElement) {
+                    photoElement.remove();
+                }
+                
+                // Actualizar contador
+                updatePhotoCounter();
+                
+                // Mostrar mensaje de éxito
+                showAlert('Foto eliminada exitosamente', 'success');
+            } else {
+                showAlert('Error al eliminar la foto', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error al eliminar la foto:', error);
+            showAlert('Error al eliminar la foto', 'danger');
+        });
+    }
+}
+
+function updatePhotoCounter() {
+    const photoItems = document.querySelectorAll('.photo-item');
+    const counter = document.querySelector('.card-header h5');
+    counter.innerHTML = `<i class="bi bi-camera"></i> Evidencia Fotográfica (${photoItems.length})`;
+    
+    // Mostrar estado vacío si no hay fotos
+    if (photoItems.length === 0) {
+        const gallery = document.getElementById('photographicGallery');
+        gallery.innerHTML = `
+            <div class="text-center py-4" id="emptyPhotoState">
+                <i class="bi bi-camera text-muted" style="font-size: 3rem;"></i>
+                <h6 class="text-muted mt-2">No hay fotos de evidencia</h6>
+                <p class="text-muted small">Sube fotos para documentar el proceso</p>
+                <button class="btn btn-primary" onclick="openPhotoUploadModal()">
+                    <i class="bi bi-plus-circle"></i> Subir Primera Foto
+                </button>
+            </div>
+        `;
+    }
+}
+
+function showAlert(message, type) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    document.body.insertBefore(alert, document.body.firstChild);
+    
+    setTimeout(() => {
+        alert.remove();
+    }, 5000);
+}
+
+// Manejar envío del formulario de fotos
+document.getElementById('photoUploadForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const progressBar = document.getElementById('uploadProgress');
+    const submitButton = this.querySelector('button[type="submit"]');
+    
+    // Mostrar progreso
+    progressBar.style.display = 'block';
+    submitButton.disabled = true;
+    
+    // Enviar fotos
+    fetch('{% url "quotations:photo_upload" quotation.pk %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('photoUploadModal'));
+            modal.hide();
+            
+            // Recargar la galería
+            location.reload();
+        } else {
+            showAlert('Error al subir las fotos: ' + (data.error || 'Error desconocido'), 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error al subir fotos:', error);
+        showAlert('Error al subir las fotos', 'danger');
+    })
+    .finally(() => {
+        progressBar.style.display = 'none';
+        submitButton.disabled = false;
+    });
+});
 </script>
 {% endblock %} 

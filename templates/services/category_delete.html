@@ -1,0 +1,65 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Eliminar Categoría - Quotify{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-trash"></i> Confirmar Eliminación
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>¿Está seguro que desea eliminar esta categoría?</strong>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label"><strong>Nombre de la categoría:</strong></label>
+                    <p class="form-control-plaintext">{{ object.name }}</p>
+                </div>
+                
+                {% if object.description %}
+                <div class="mb-3">
+                    <label class="form-label"><strong>Descripción:</strong></label>
+                    <p class="form-control-plaintext">{{ object.description }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <label class="form-label"><strong>Servicios asociados:</strong></label>
+                    <p class="form-control-plaintext">
+                        <span class="badge bg-secondary">{{ object.services.count }} servicio{{ object.services.count|pluralize }}</span>
+                    </p>
+                </div>
+                
+                {% if object.services.exists %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Advertencia:</strong> Esta categoría tiene servicios asociados. Al eliminarla, los servicios quedarán sin categoría.
+                </div>
+                {% endif %}
+                
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-6">
+                            <button type="submit" class="btn btn-danger w-100">
+                                <i class="bi bi-trash"></i> Sí, Eliminar
+                            </button>
+                        </div>
+                        <div class="col-6">
+                            <a href="{% url 'services:category_list' %}" class="btn btn-secondary w-100">
+                                <i class="bi bi-arrow-left"></i> Cancelar
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

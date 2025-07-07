@@ -32,4 +32,9 @@ urlpatterns = [
     # AJAX endpoints for items
     path('api/service-info/', views.get_service_info, name='service_info'),
     path('<int:quotation_pk>/items/add-quick/', views.add_item_quick, name='item_add_quick'),
+    
+    # Photo evidence management
+    path('<int:quotation_pk>/photos/upload/', views.photo_upload, name='photo_upload'),
+    path('<int:quotation_pk>/photos/<int:photo_pk>/', views.photo_detail, name='photo_detail'),
+    path('<int:quotation_pk>/photos/<int:photo_pk>/delete/', views.photo_delete, name='photo_delete'),
 ] 

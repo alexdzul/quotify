@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_POST, require_http_methods
 from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Q
 from django import forms
@@ -15,12 +15,17 @@ from weasyprint import HTML, CSS
 from weasyprint.text.fonts import FontConfiguration
 import tempfile
 import os
-from .models import Quotation, QuotationItem, QuotationActivity
+from .models import Quotation, QuotationItem, QuotationActivity, QuotationPhotographicReport
 from apps.clients.models import Client
 from apps.services.models import Service
 from apps.core.models import CompanyProfile, SalesPerson
 import json
 import traceback
+from django.db import models
+from django.core.validators import MinValueValidator
+from django.utils import timezone
+from decimal import Decimal
+import uuid
 
 class QuotationListView(LoginRequiredMixin, ListView):
     model = Quotation
@@ -133,7 +138,6 @@ class QuotationKanbanView(LoginRequiredMixin, TemplateView):
                 context['current_company_profile_obj'] = CompanyProfile.objects.get(id=company_profile_id)
             except CompanyProfile.DoesNotExist:
                 context['current_company_profile_obj'] = None
-        
         return context
 
 class QuotationDetailView(LoginRequiredMixin, DetailView):
@@ -802,6 +806,20 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             
             items_with_absolute_urls.append(item_data)
         
+        # Preparar las imágenes de evidencia fotográfica con URLs absolutas
+        photographic_report_with_urls = []
+        for photo in quotation.photographic_report.all().order_by('photo_type', 'order'):
+            photo_data = {
+                'photo': photo,
+                'display_title': photo.display_title,
+                'get_photo_type_display': photo.get_photo_type_display(),
+                'location_description': photo.location_description,
+                'photo_date': photo.photo_date,
+                'description': photo.description,
+                'image_url': request.build_absolute_uri(photo.image.url) if photo.image else None,
+            }
+            photographic_report_with_urls.append(photo_data)
+        
         # Preparar el contexto para el PDF
         context = {
             'quotation': quotation,
@@ -812,7 +830,7 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             'company_brand_color': company_profile.brand_color if company_profile and company_profile.brand_color else "#2c5f2d",
             'salesperson_photo_url': request.build_absolute_uri(quotation.salesperson.profile_photo.url) if quotation.salesperson and quotation.salesperson.profile_photo else None,
             'items_with_urls': items_with_absolute_urls,
-            'photographic_report': quotation.photographic_report.all().order_by('photo_type', 'order'),
+            'photographic_report': photographic_report_with_urls,
         }
         
         # Renderizar el HTML
@@ -1209,6 +1227,60 @@ class QuotationPDFView(LoginRequiredMixin, DetailView):
             font-weight: bold;
         }}
         
+        /* Estilos para Evidencia Fotográfica */
+        .photographic-evidence {{
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }}
+        
+        .photographic-evidence h2 {{
+            color: {brand_color};
+            border-bottom: 2px solid {brand_color};
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }}
+        
+        .evidence-gallery {{
+            margin-top: 15px;
+        }}
+        
+        .evidence-item {{
+            margin-bottom: 25px;
+            padding: 15px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: #f8f9fa;
+            page-break-inside: avoid;
+        }}
+        
+        .evidence-header h4 {{
+            color: {brand_color};
+            margin: 0 0 10px 0;
+            font-size: 16px;
+        }}
+        
+        .evidence-image {{
+            text-align: center;
+            margin: 15px 0;
+        }}
+        
+        .evidence-image img {{
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }}
+        
+        .evidence-description {{
+            margin-top: 10px;
+            font-size: 14px;
+            color: #555;
+            background: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid {brand_color};
+        }}
+        
         .text-right {{
             text-align: right;
         }}
@@ -1277,3 +1349,98 @@ class QuotationPreviewView(LoginRequiredMixin, DetailView):
         })
         
         return context
+
+
+@login_required
+@require_POST
+def photo_upload(request, quotation_pk):
+    """Vista AJAX para subir fotos de evidencia fotográfica"""
+    try:
+        quotation = get_object_or_404(Quotation, pk=quotation_pk)
+        photos = request.FILES.getlist('photos')
+        
+        if not photos:
+            return JsonResponse({'success': False, 'error': 'No se seleccionaron fotos'})
+        
+        photo_type = request.POST.get('photo_type', 'before')
+        location_description = request.POST.get('location_description', '')
+        description = request.POST.get('description', '')
+        
+        uploaded_photos = []
+        
+        for i, photo_file in enumerate(photos):
+            # Crear título automático si no hay descripción específica
+            if description:
+                title = f"{description} - Foto {i+1}"
+            else:
+                title = f"Evidencia fotográfica - Foto {i+1}"
+            
+            # Crear el objeto QuotationPhotographicReport
+            photo_report = QuotationPhotographicReport.objects.create(
+                quotation=quotation,
+                image=photo_file,
+                photo_type=photo_type,
+                title=title,
+                description=description,
+                location_description=location_description,
+                order=quotation.photographic_report.count() + i + 1
+            )
+            
+            uploaded_photos.append({
+                'id': photo_report.pk,
+                'title': photo_report.display_title,
+                'image_url': photo_report.image.url,
+                'photo_type': photo_report.get_photo_type_display()
+            })
+        
+        return JsonResponse({
+            'success': True, 
+            'message': f'{len(uploaded_photos)} foto(s) subida(s) exitosamente',
+            'photos': uploaded_photos
+        })
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
+
+@login_required
+def photo_detail(request, quotation_pk, photo_pk):
+    """Vista AJAX para obtener detalles de una foto"""
+    try:
+        quotation = get_object_or_404(Quotation, pk=quotation_pk)
+        photo = get_object_or_404(QuotationPhotographicReport, pk=photo_pk, quotation=quotation)
+        
+        data = {
+            'title': photo.display_title,
+            'image_url': photo.image.url,
+            'photo_type': photo.get_photo_type_display(),
+            'photo_date': photo.photo_date.strftime('%d/%m/%Y'),
+            'location_description': photo.location_description,
+            'description': photo.description,
+        }
+        
+        return JsonResponse(data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=404)
+
+
+@login_required
+@require_http_methods(["DELETE"])
+def photo_delete(request, quotation_pk, photo_pk):
+    """Vista AJAX para eliminar una foto"""
+    try:
+        quotation = get_object_or_404(Quotation, pk=quotation_pk)
+        photo = get_object_or_404(QuotationPhotographicReport, pk=photo_pk, quotation=quotation)
+        
+        # Eliminar el archivo de imagen
+        if photo.image:
+            photo.image.delete()
+        
+        # Eliminar el objeto
+        photo.delete()
+        
+        return JsonResponse({'success': True, 'message': 'Foto eliminada exitosamente'})
+        
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})

@@ -479,10 +479,12 @@
     </main>
     
     {% else %}
-    <!-- Redirigir a login si no está autenticado -->
+    <!-- Redirigir a login si no está autenticado (solo si no estamos ya en login) -->
+    {% if not request.resolver_match.url_name == 'login' %}
     <script>
-        window.location.href = "{% url 'core:login' %}";
+        window.location.href = "{% url 'login' %}";
     </script>
+    {% endif %}
     {% endif %}
 
     <!-- Bootstrap JS -->

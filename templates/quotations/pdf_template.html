@@ -89,6 +89,47 @@
         {% endif %}
     </div>
 
+    <!-- EVIDENCIA FOTOGRÁFICA -->
+    {% if photographic_report %}
+        <div class="photographic-evidence">
+            <h2 style="color: var(--brand-color, #2c5f2d); border-bottom: 2px solid var(--brand-color, #2c5f2d); padding-bottom: 10px; margin-bottom: 20px;">
+                Evidencia Fotográfica
+            </h2>
+            
+            <div class="evidence-gallery">
+                {% for photo in photographic_report %}
+                    <div class="evidence-item" style="margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background: #f8f9fa;">
+                        <div class="evidence-header" style="margin-bottom: 10px;">
+                            <h4 style="color: var(--brand-color, #2c5f2d); margin: 0; font-size: 16px;">
+                                {{ photo.display_title }}
+                            </h4>
+                            <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                <span style="background: var(--brand-color, #2c5f2d); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
+                                    {{ photo.get_photo_type_display }}
+                                </span>
+                                {% if photo.location_description %}
+                                    <span style="margin-left: 10px;">📍 {{ photo.location_description }}</span>
+                                {% endif %}
+                                <span style="margin-left: 10px;">📅 {{ photo.photo_date|date:"d/m/Y" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="evidence-image" style="text-align: center; margin: 15px 0;">
+                            <img src="{{ photo.image_url }}" alt="{{ photo.display_title }}" 
+                                 style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        </div>
+                        
+                        {% if photo.description %}
+                            <div class="evidence-description" style="margin-top: 10px; font-size: 14px; color: #555;">
+                                <strong>Descripción:</strong> {{ photo.description }}
+                            </div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
     <!-- INFORMACIÓN DE LA COTIZACIÓN -->
     <div class="quotation-info">
         <div style="display: flex; justify-content: space-between;">
