@@ -1,13 +1,143 @@
 {% extends 'base/base.html' %}
 
-{% block title %}Eliminar Cotización - Quotify{% endblock %}
+{% block title %}Eliminar Cotización - {{ object.quotation_number }}{% endblock %}
+
+{% block breadcrumb %}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{% url 'core:dashboard' %}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quotations:list' %}">Cotizaciones</a></li>
+        <li class="breadcrumb-item"><a href="{% url 'quotations:detail' object.pk %}">{{ object.quotation_number }}</a></li>
+        <li class="breadcrumb-item active">Eliminar</li>
+    </ol>
+</nav>
+{% endblock %}
 
 {% block content %}
-<h1>Eliminar Cotización</h1>
-<p>¿Estás seguro de que deseas eliminar la cotización <strong>{{ quotation.quotation_number }}</strong>?</p>
-<form method="post">
-    {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Sí, Eliminar</button>
-    <a href="{% url 'quotations:list' %}" class="btn btn-secondary">Cancelar</a>
-</form>
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <!-- Encabezado -->
+            <div class="mb-4 text-center">
+                <h2 class="mb-1 text-danger">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    Eliminar Cotización
+                </h2>
+                <p class="text-muted">Esta acción no se puede deshacer</p>
+            </div>
+
+            <!-- Formulario de Confirmación -->
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="bi bi-trash"></i>
+                        Confirmar Eliminación
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if not can_delete %}
+                        <!-- Restricción de eliminación -->
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>No se puede eliminar esta cotización</strong>
+                            <p class="mb-0 mt-2">{{ delete_restriction_message }}</p>
+                        </div>
+                        
+                        <div class="d-flex justify-content-between">
+                            <a href="{% url 'quotations:detail' object.pk %}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left"></i> Volver al Detalle
+                            </a>
+                            <a href="{% url 'quotations:update' object.pk %}" class="btn btn-primary">
+                                <i class="bi bi-pencil"></i> Editar Estado
+                            </a>
+                        </div>
+                    {% else %}
+                        <!-- Información de la Cotización -->
+                        <div class="alert alert-info mb-4">
+                            <h6 class="alert-heading">
+                                <i class="bi bi-info-circle"></i>
+                                Información de la Cotización
+                            </h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Número:</strong> {{ object.quotation_number }}</p>
+                                    <p class="mb-1"><strong>Cliente:</strong> {{ object.client.name }}</p>
+                                    <p class="mb-1"><strong>Fecha:</strong> {{ object.quotation_date|date:"d/m/Y" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <p class="mb-1"><strong>Estado:</strong> {{ object.get_status_display }}</p>
+                                    <p class="mb-1"><strong>Total:</strong> ${{ object.total_amount|floatformat:2 }}</p>
+                                    <p class="mb-1"><strong>Items:</strong> {{ object.items.count }}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Mensaje de Advertencia -->
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>¡Atención!</strong> Esta acción eliminará permanentemente:
+                            <ul class="mb-0 mt-2">
+                                <li>La cotización completa</li>
+                                <li>Todos los servicios/items asociados ({{ object.items.count }} items)</li>
+                                <li>El historial de actividades</li>
+                                <li>Las fotos del reporte fotográfico ({{ object.get_photographic_report_count }} fotos)</li>
+                            </ul>
+                        </div>
+
+                        <!-- Verificación adicional -->
+                        <div class="mb-4">
+                            <label for="confirm-text" class="form-label">
+                                <strong>Para confirmar, escribe el número de cotización:</strong>
+                            </label>
+                            <input type="text" class="form-control" id="confirm-text" placeholder="{{ object.quotation_number }}" autocomplete="off">
+                            <div class="form-text">Escribe exactamente: <code>{{ object.quotation_number }}</code></div>
+                        </div>
+
+                        <!-- Formulario -->
+                        <form method="post" id="delete-form">
+                            {% csrf_token %}
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'quotations:detail' object.pk %}" class="btn btn-secondary">
+                                    <i class="bi bi-arrow-left"></i> Cancelar
+                                </a>
+                                <button type="submit" class="btn btn-danger" id="delete-button" disabled>
+                                    <i class="bi bi-trash"></i> Confirmar Eliminación
+                                </button>
+                            </div>
+                        </form>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if can_delete %}
+    const confirmText = document.getElementById('confirm-text');
+    const deleteButton = document.getElementById('delete-button');
+    const expectedText = '{{ object.quotation_number }}';
+    
+    confirmText.addEventListener('input', function() {
+        if (this.value === expectedText) {
+            deleteButton.disabled = false;
+            deleteButton.classList.remove('btn-danger');
+            deleteButton.classList.add('btn-outline-danger');
+        } else {
+            deleteButton.disabled = true;
+            deleteButton.classList.remove('btn-outline-danger');
+            deleteButton.classList.add('btn-danger');
+        }
+    });
+    
+    // Confirmación adicional al enviar
+    document.getElementById('delete-form').addEventListener('submit', function(e) {
+        if (!confirm('¿Estás completamente seguro? Esta acción NO se puede deshacer.')) {
+            e.preventDefault();
+        }
+    });
+    {% endif %}
+});
+</script>
 {% endblock %} 

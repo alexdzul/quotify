@@ -313,8 +313,53 @@ class QuotationDeleteView(LoginRequiredMixin, DeleteView):
     template_name = 'quotations/delete.html'
     success_url = reverse_lazy('quotations:list')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        quotation = self.object
+        
+        # Verificar si se puede eliminar
+        can_delete = quotation.status in ['draft', 'rejected', 'expired']
+        context['can_delete'] = can_delete
+        
+        if not can_delete:
+            if quotation.status == 'accepted':
+                context['delete_restriction_message'] = 'No se puede eliminar una cotización aceptada. Considere crear una nueva cotización en su lugar.'
+            elif quotation.status == 'sent':
+                context['delete_restriction_message'] = 'No se puede eliminar una cotización que ya ha sido enviada al cliente. Primero cambie el estado a "Borrador" o "Rechazada".'
+        
+        return context
+    
+    def dispatch(self, request, *args, **kwargs):
+        quotation = self.get_object()
+        
+        # Solo permitir eliminación para ciertos estados
+        if quotation.status not in ['draft', 'rejected', 'expired']:
+            messages.error(
+                request, 
+                f'No se puede eliminar una cotización con estado "{quotation.get_status_display()}". '
+                'Solo se pueden eliminar cotizaciones en estado Borrador, Rechazada o Expirada.'
+            )
+            return redirect('quotations:detail', pk=quotation.pk)
+        
+        return super().dispatch(request, *args, **kwargs)
+    
     def delete(self, request, *args, **kwargs):
-        messages.success(self.request, 'Cotización eliminada exitosamente.')
+        quotation = self.get_object()
+        
+        # Registrar actividad antes de eliminar
+        QuotationActivity.objects.create(
+            quotation=quotation,
+            activity_type='status_change',
+            title='Cotización eliminada',
+            description=f'La cotización {quotation.quotation_number} fue eliminada por el usuario {request.user.get_full_name() or request.user.username}',
+            user=request.user,
+            is_automatic=True
+        )
+        
+        messages.success(
+            self.request, 
+            f'Cotización {quotation.quotation_number} eliminada exitosamente.'
+        )
         return super().delete(request, *args, **kwargs)
 
 class QuotationDuplicateView(LoginRequiredMixin, DetailView):
@@ -694,12 +739,11 @@ def get_company_info(request, company_id):
         })
 
 @login_required
-@require_POST
 @csrf_exempt
 def get_service_info(request):
     """Vista AJAX para obtener información de un servicio"""
     try:
-        service_id = request.POST.get('service_id')
+        service_id = request.POST.get('service_id') or request.GET.get('service_id')
         service = get_object_or_404(Service, pk=service_id)
         
         return JsonResponse({
@@ -711,6 +755,7 @@ def get_service_info(request):
                 'unit_price': str(service.unit_price),
                 'tax_rate': str(service.tax_rate),
                 'unit': service.unit,
+                'unit_display': service.get_unit_display(),
                 'category': service.category.name if service.category else '',
                 'image_url': service.main_image.url if service.main_image else ''
             }

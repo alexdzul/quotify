@@ -21,4 +21,4 @@ urlpatterns = [
     
     # AJAX URLs for notes
     path('notes/<int:pk>/toggle-resolved/', views.toggle_note_resolved, name='note_toggle_resolved'),
-] 
+]

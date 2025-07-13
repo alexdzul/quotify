@@ -75,6 +75,27 @@ Agregar Servicio - {{ quotation.quotation_number }}
                         </div>
                     </div>
 
+                    <!-- Panel de cálculo en tiempo real -->
+                    <div class="card bg-light mb-3" id="calculation-panel" style="display: none;">
+                        <div class="card-body">
+                            <h6 class="card-title"><i class="bi bi-calculator"></i> Cálculo</h6>
+                            <div class="row">
+                                <div class="col-4">
+                                    <small class="text-muted">Subtotal:</small>
+                                    <div class="fw-bold" id="calc-subtotal">$0.00</div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Impuesto:</small>
+                                    <div class="fw-bold" id="calc-tax">$0.00</div>
+                                </div>
+                                <div class="col-4">
+                                    <small class="text-muted">Total:</small>
+                                    <div class="fw-bold text-success" id="calc-total">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mb-3">
                         <label for="id_description" class="form-label">
                             <i class="bi bi-chat-left-text"></i> Descripción Personalizada
@@ -113,6 +134,162 @@ Agregar Servicio - {{ quotation.quotation_number }}
                 </div>
             </div>
         </div>
+        
+        <!-- Panel de información del servicio seleccionado -->
+        <div class="card mt-3" id="service-info-panel" style="display: none;">
+            <div class="card-header">
+                <h6><i class="bi bi-info-circle"></i> Información del Servicio</h6>
+            </div>
+            <div class="card-body">
+                <div id="service-details">
+                    <!-- Se llenará dinámicamente con JavaScript -->
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<!-- JavaScript para cargar información del servicio -->
+<script>
+function updateServiceInfo(serviceId) {
+    const unitPriceField = document.getElementById('id_unit_price');
+    const taxRateField = document.getElementById('id_tax_rate');
+    const serviceInfoPanel = document.getElementById('service-info-panel');
+    const serviceDetails = document.getElementById('service-details');
+    
+    if (!serviceId) {
+        serviceInfoPanel.style.display = 'none';
+        serviceDetails.innerHTML = '';
+        return;
+    }
+    
+    // Mostrar loading
+    serviceDetails.innerHTML = '<div class="text-center"><i class="bi bi-hourglass-split"></i> Cargando...</div>';
+    serviceInfoPanel.style.display = 'block';
+    
+    // Hacer petición AJAX para obtener información del servicio
+    fetch(`{% url 'quotations:service_info' %}?service_id=${serviceId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const service = data.service;
+                
+                // Solo actualizar si los campos están vacíos o es un nuevo item
+                {% if not object %}
+                unitPriceField.value = service.unit_price;
+                taxRateField.value = service.tax_rate;
+                updateCalculations(); // Actualizar cálculos después de rellenar los campos
+                {% else %}
+                // Para edición, mostrar la información pero no cambiar automáticamente
+                {% endif %}
+                
+                // Mostrar información del servicio
+                serviceDetails.innerHTML = `
+                    <div class="mb-2">
+                        <strong>Nombre:</strong><br>
+                        <small>${service.name}</small>
+                    </div>
+                    <div class="mb-2">
+                        <strong>Precio:</strong> $${service.unit_price}/${service.unit_display}
+                    </div>
+                    <div class="mb-2">
+                        <strong>IVA:</strong> ${service.tax_rate}%
+                    </div>
+                    ${service.category ? `<div class="mb-2"><strong>Categoría:</strong><br><small>${service.category}</small></div>` : ''}
+                    ${service.description ? `<div class="mb-2"><strong>Descripción:</strong><br><small>${service.description.substring(0, 100)}${service.description.length > 100 ? '...' : ''}</small></div>` : ''}
+                    {% if not object %}
+                    <div class="alert alert-success alert-sm mt-3">
+                        <i class="bi bi-check-circle"></i>
+                        <small>Precio y tasa de impuesto actualizados automáticamente</small>
+                    </div>
+                    {% else %}
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="applyServicePricing('${service.unit_price}', '${service.tax_rate}')">
+                            <i class="bi bi-arrow-repeat"></i> Aplicar precios del servicio
+                        </button>
+                    </div>
+                    {% endif %}
+                `;
+                
+                serviceInfoPanel.style.display = 'block';
+            } else {
+                serviceDetails.innerHTML = '<div class="text-danger"><i class="bi bi-exclamation-triangle"></i> Error al cargar información del servicio</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            serviceDetails.innerHTML = '<div class="text-danger"><i class="bi bi-exclamation-triangle"></i> Error de conexión</div>';
+        });
+}
+
+{% if object %}
+function applyServicePricing(unitPrice, taxRate) {
+    document.getElementById('id_unit_price').value = unitPrice;
+    document.getElementById('id_tax_rate').value = taxRate;
+    updateCalculations(); // Actualizar cálculos después de aplicar precios
+    
+    // Mostrar confirmación
+    const alertDiv = document.createElement('div');
+    alertDiv.className = 'alert alert-success alert-dismissible fade show mt-2';
+    alertDiv.innerHTML = `
+        <i class="bi bi-check-circle"></i>
+        Precios aplicados desde el servicio
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.getElementById('service-details').appendChild(alertDiv);
+    
+    // Auto-remover la alerta después de 3 segundos
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 3000);
+}
+{% endif %}
+
+function updateCalculations() {
+    const quantity = parseFloat(document.getElementById('id_quantity').value) || 0;
+    const unitPrice = parseFloat(document.getElementById('id_unit_price').value) || 0;
+    const taxRate = parseFloat(document.getElementById('id_tax_rate').value) || 0;
+    
+    const subtotal = quantity * unitPrice;
+    const taxAmount = subtotal * (taxRate / 100);
+    const total = subtotal + taxAmount;
+    
+    // Actualizar elementos de cálculo
+    document.getElementById('calc-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+    document.getElementById('calc-tax').textContent = `$${taxAmount.toFixed(2)}`;
+    document.getElementById('calc-total').textContent = `$${total.toFixed(2)}`;
+    
+    // Mostrar/ocultar panel de cálculo
+    const calculationPanel = document.getElementById('calculation-panel');
+    if (quantity > 0 && unitPrice > 0) {
+        calculationPanel.style.display = 'block';
+    } else {
+        calculationPanel.style.display = 'none';
+    }
+}
+
+// Ejecutar al cargar la página si ya hay un servicio seleccionado
+document.addEventListener('DOMContentLoaded', function() {
+    const serviceField = document.getElementById('id_service');
+    const quantityField = document.getElementById('id_quantity');
+    const unitPriceField = document.getElementById('id_unit_price');
+    const taxRateField = document.getElementById('id_tax_rate');
+    
+    // Eventos para cálculo en tiempo real
+    [quantityField, unitPriceField, taxRateField].forEach(field => {
+        field.addEventListener('input', updateCalculations);
+        field.addEventListener('change', updateCalculations);
+    });
+    
+    // Cargar información del servicio si ya está seleccionado
+    if (serviceField.value) {
+        updateServiceInfo(serviceField.value);
+    }
+    
+    // Actualizar cálculos iniciales
+    updateCalculations();
+});
+</script>
 {% endblock %}

@@ -44,6 +44,38 @@
         <a href="{% url 'quotations:duplicate' quotation.pk %}" class="btn btn-info">
             <i class="bi bi-files"></i> Duplicar
         </a>
+        
+        <!-- Dropdown para más acciones -->
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-three-dots"></i> Más
+            </button>
+            <ul class="dropdown-menu">
+                {% if quotation.status == 'draft' or quotation.status == 'rejected' or quotation.status == 'expired' %}
+                <li>
+                    <a class="dropdown-item text-danger" href="{% url 'quotations:delete' quotation.pk %}" onclick="return confirm('¿Estás seguro de que deseas eliminar esta cotización? Esta acción no se puede deshacer.')">
+                        <i class="bi bi-trash"></i> Eliminar Cotización
+                    </a>
+                </li>
+                {% else %}
+                <li>
+                    <span class="dropdown-item text-muted" title="No se puede eliminar una cotización {{ quotation.get_status_display|lower }}">
+                        <i class="bi bi-trash"></i> Eliminar Cotización
+                        <small class="d-block text-muted">
+                            {% if quotation.status == 'sent' %}
+                                No disponible para cotizaciones enviadas
+                            {% elif quotation.status == 'accepted' %}
+                                No disponible para cotizaciones aceptadas
+                            {% else %}
+                                Solo disponible para borradores, rechazadas o expiradas
+                            {% endif %}
+                        </small>
+                    </span>
+                </li>
+                {% endif %}
+            </ul>
+        </div>
+        
         <a href="{% url 'quotations:list' %}" class="btn btn-outline-secondary">
             <i class="bi bi-arrow-left"></i> Volver
         </a>
