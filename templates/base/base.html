@@ -39,11 +39,99 @@
             z-index: 1030;
             height: var(--navbar-height);
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-radius: 0;
         }
         
         .navbar-brand {
             font-weight: 600;
             font-size: 1.4rem;
+        }
+        
+        /* Navbar responsive improvements */
+        .navbar-toggler {
+            border: none;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .navbar-toggler:focus {
+            box-shadow: none;
+        }
+        
+        .navbar-collapse {
+            background-color: transparent;
+            border-radius: 0;
+            margin-top: 0;
+            padding: 0;
+        }
+        
+        @media (max-width: 991.98px) {
+            .navbar-collapse {
+                background-color: var(--primary-color);
+                border-radius: 0;
+                margin-top: 0.5rem;
+                padding: 0.5rem;
+                border-top: 1px solid rgba(255, 255, 255, 0.1);
+            }
+        }
+        
+        /* Dropdown menu improvements */
+        .dropdown-menu {
+            border-radius: 0.5rem;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 250px;
+            margin-top: 0.25rem;
+        }
+        
+        .dropdown-menu-end {
+            --bs-position: end;
+        }
+        
+        .dropdown-header {
+            color: var(--primary-color);
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+        }
+        
+        .dropdown-item {
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            display: flex;
+            align-items: center;
+        }
+        
+        .dropdown-item:hover {
+            background-color: var(--light-bg);
+            transform: translateX(2px);
+        }
+        
+        .dropdown-item.text-danger:hover {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545 !important;
+        }
+        
+        /* Quick action button */
+        .nav-link[title] {
+            position: relative;
+        }
+        
+        .nav-link[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            z-index: 1040;
         }
         
         /* Sidebar fijo */
@@ -120,10 +208,7 @@
             
             .main-content {
                 margin-left: 0;
-            }
-            
-            .navbar-toggler {
-                display: block !important;
+                padding: 1rem;
             }
             
             .sidebar-overlay {
@@ -142,9 +227,39 @@
             }
         }
         
-        @media (min-width: 769px) {
-            .navbar-toggler {
-                display: none !important;
+        @media (max-width: 991.98px) {
+            .main-content {
+                padding: 1.5rem;
+            }
+            
+            /* Ajustar el texto del brand en móvil */
+            .navbar-brand {
+                font-size: 1.2rem;
+            }
+        }
+        
+        @media (min-width: 769px) and (max-width: 991.98px) {
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease-in-out;
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: var(--sidebar-width);
             }
         }
         
@@ -347,39 +462,93 @@
     <!-- Navbar fijo -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
-            <a class="navbar-brand" href="{% url 'core:dashboard' %}">
-                <i class="bi bi-calculator"></i> {{ system_name }}
+            <a class="navbar-brand d-flex align-items-center" href="{% url 'core:dashboard' %}">
+                <i class="bi bi-calculator me-2"></i>
+                <span class="d-none d-sm-inline">{{ system_name }}</span>
             </a>
             
-            <button class="navbar-toggler" type="button" onclick="toggleSidebar()">
+            <!-- Botón para toggle del sidebar en móvil -->
+            <button class="navbar-toggler d-lg-none" type="button" onclick="toggleSidebar()" aria-label="Toggle sidebar">
                 <span class="navbar-toggler-icon"></span>
             </button>
             
+            <!-- Botón para toggle del menú en móvil -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" 
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-three-dots-vertical"></i>
+            </button>
+            
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <!-- Enlaces principales - solo visible en móvil -->
+                <ul class="navbar-nav me-auto d-lg-none">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'core:dashboard' %}">
-                            <i class="bi bi-house"></i> Dashboard
+                            <i class="bi bi-house me-2"></i>Dashboard
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'quotations:create' %}">
-                            <i class="bi bi-plus-circle"></i> Nueva Cotización
+                            <i class="bi bi-plus-circle me-2"></i>Nueva Cotización
                         </a>
                     </li>
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="bi bi-person"></i> {{ user.username }}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'quotations:list' %}">
+                            <i class="bi bi-file-text me-2"></i>Cotizaciones
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="/admin/">
-                                <i class="bi bi-gear me-2"></i>Panel de Administración
-                            </a></li>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'clients:list' %}">
+                            <i class="bi bi-people me-2"></i>Clientes
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'services:list' %}">
+                            <i class="bi bi-tools me-2"></i>Servicios
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                </ul>
+                
+                <!-- Menú de usuario -->
+                <ul class="navbar-nav ms-auto">
+                    <!-- Acciones rápidas - solo desktop -->
+                    <li class="nav-item d-none d-lg-block">
+                        <a class="nav-link" href="{% url 'quotations:create' %}" title="Nueva Cotización">
+                            <i class="bi bi-plus-circle fs-5"></i>
+                        </a>
+                    </li>
+                    
+                    <!-- Dropdown del usuario -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle me-1"></i>
+                            <span class="d-none d-md-inline">{{ user.get_full_name|default:user.username }}</span>
+                            <span class="d-md-none">{{ user.username|truncatechars:10 }}</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <h6 class="dropdown-header">
+                                    <i class="bi bi-person me-1"></i>
+                                    {{ user.get_full_name|default:user.username }}
+                                </h6>
+                            </li>
                             <li><hr class="dropdown-divider"></li>
                             <li>
-                                <form method="post" action="{% url 'core:logout' %}" style="display: inline;">
+                                <a class="dropdown-item" href="{% url 'core:system_settings' %}">
+                                    <i class="bi bi-gear me-2"></i>Configuración del Sistema
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="/admin/" target="_blank">
+                                    <i class="bi bi-tools me-2"></i>Panel de Administración
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post" action="{% url 'core:logout' %}" class="d-inline">
                                     {% csrf_token %}
-                                    <button type="submit" class="dropdown-item" style="border: none; background: none; width: 100%; text-align: left;">
+                                    <button type="submit" class="dropdown-item text-danger">
                                         <i class="bi bi-box-arrow-right me-2"></i>Cerrar Sesión
                                     </button>
                                 </form>
@@ -509,13 +678,58 @@
             });
         });
         
-        // Cerrar sidebar al redimensionar la ventana
+        // Cerrar sidebar y navbar collapse al redimensionar la ventana
         window.addEventListener('resize', () => {
             if (window.innerWidth > 768) {
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.querySelector('.sidebar-overlay');
                 sidebar.classList.remove('show');
                 overlay.classList.remove('show');
+            }
+            
+            // Cerrar navbar collapse en desktop
+            if (window.innerWidth > 991) {
+                const navbarCollapse = document.getElementById('navbarNav');
+                if (navbarCollapse.classList.contains('show')) {
+                    const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                        toggle: false
+                    });
+                    bsCollapse.hide();
+                }
+            }
+        });
+        
+        // Cerrar navbar collapse al hacer clic en enlaces en móvil
+        document.querySelectorAll('#navbarNav .nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if (window.innerWidth <= 991) {
+                    const navbarCollapse = document.getElementById('navbarNav');
+                    const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                        toggle: false
+                    });
+                    bsCollapse.hide();
+                }
+            });
+        });
+        
+        // Mejorar el comportamiento del dropdown en móvil
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropdownToggle = document.querySelector('.navbar .dropdown-toggle');
+            if (dropdownToggle) {
+                dropdownToggle.addEventListener('click', function(e) {
+                    // En móvil, asegurar que el dropdown se posicione correctamente
+                    if (window.innerWidth <= 991) {
+                        setTimeout(() => {
+                            const dropdownMenu = this.nextElementSibling;
+                            if (dropdownMenu) {
+                                const rect = dropdownMenu.getBoundingClientRect();
+                                if (rect.right > window.innerWidth) {
+                                    dropdownMenu.classList.add('dropdown-menu-end');
+                                }
+                            }
+                        }, 10);
+                    }
+                });
             }
         });
     </script>
