@@ -1,61 +1,36 @@
-{% extends 'base/base.html' %}
+{% extends 'base/auth_base.html' %}
 
-{% block title %}Sesión Cerrada{% endblock %}
+{% block title %}Sesión Cerrada - {{ system_name }}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="card-header bg-success text-white text-center">
-                    <h4 class="mb-0">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Sesión Cerrada
-                    </h4>
-                </div>
-                <div class="card-body text-center">
-                    <div class="mb-4">
-                        <i class="bi bi-box-arrow-right text-success" style="font-size: 3rem;"></i>
-                    </div>
-                    <p class="lead">Has cerrado sesión exitosamente.</p>
-                    <p class="text-muted">Gracias por usar Quotify.</p>
-                    
-                    <div class="d-grid">
-                        <a href="{% url 'login' %}" class="btn btn-primary">
-                            <i class="bi bi-box-arrow-in-right me-2"></i>
-                            Iniciar Sesión Nuevamente
-                        </a>
-                    </div>
-                </div>
-                <div class="card-footer text-center text-muted">
-                    <small>
-                        <i class="bi bi-shield-check me-1"></i>
-                        Tu sesión ha sido cerrada de forma segura
-                    </small>
-                </div>
-            </div>
+<div class="auth-card card">
+    <div class="auth-header card-header text-center">
+        <a href="/" class="brand-logo">
+            <i class="bi bi-file-earmark-text"></i>
+            {{ system_name }}
+        </a>
+        <p class="text-white mt-2 mb-0 opacity-75">Sistema de Gestión de Cotizaciones</p>
+    </div>
+    <div class="auth-body card-body text-center">
+        <div class="mb-4">
+            <i class="bi bi-check-circle text-success" style="font-size: 4rem;"></i>
+        </div>
+        <h4 class="mb-3">Sesión Cerrada</h4>
+        <p class="text-muted mb-4">
+            Has cerrado sesión exitosamente. Gracias por usar {{ system_name }}.
+        </p>
+        <div class="d-grid">
+            <a href="{% url 'login' %}" class="btn btn-primary btn-lg">
+                <i class="bi bi-box-arrow-in-right me-2"></i>
+                Iniciar Sesión Nuevamente
+            </a>
         </div>
     </div>
+    <div class="card-footer text-center text-muted bg-light">
+        <small>
+            <i class="bi bi-shield-lock me-1"></i>
+            Mantén tu información segura
+        </small>
+    </div>
 </div>
-
-<style>
-.card {
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: none;
-    margin-top: 5rem;
-}
-
-.card-header {
-    border-bottom: none;
-}
-
-body {
-    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-    min-height: 100vh;
-}
-
-.container-fluid {
-    padding-top: 2rem;
-}
-</style>
 {% endblock %} 
