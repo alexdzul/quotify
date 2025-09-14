@@ -1,3 +1,4 @@
+{% load static %}
 {% load system_tags %}
 <!DOCTYPE html>
 <html lang="es">
@@ -5,348 +6,681 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cotización {{ quotation.quotation_number }}</title>
+    <style>
+        :root {
+            --brand-color: {{ company_brand_color|default:"#2c5f2d" }};
+            --brand-light: {{ company_brand_color|default:"#2c5f2d" }}33;
+            --brand-darker: #1a472a;
+        }
+        
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            font-size: 11pt;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .preview-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0;
+            background: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.6;
+        }
+        
+        /* ESTILOS PARA LA PORTADA */
+        .cover-page {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            min-height: 800px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        
+        .cover-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding: 30px 40px;
+            height: 120px;
+        }
+        
+        .cover-logo img {
+            max-height: 80px;
+            max-width: 200px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .cover-date {
+            background: #F5E6A3;
+            padding: 15px 25px;
+            border-radius: 0 0 0 15px;
+            text-align: center;
+            min-width: 100px;
+        }
+        
+        .date-month {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--brand-color);
+            margin-bottom: 5px;
+        }
+        
+        .date-year {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--brand-color);
+        }
+        
+        .cover-title {
+            text-align: center;
+            margin: 40px 40px 20px 40px;
+            background: rgba(255, 255, 255, 0.7);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .cover-title h1 {
+            font-size: 36px;
+            color: #333;
+            margin: 0;
+            font-weight: normal;
+        }
+        
+        .quote-number {
+            font-weight: bold;
+            color: var(--brand-color);
+        }
+        
+        .cover-subtitle {
+            font-size: 18px;
+            color: #8B4513;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        
+        .commitment-banner {
+            background: #F5E6A3;
+            padding: 15px 0;
+            margin: 30px 0;
+            text-align: center;
+            width: 100%;
+        }
+        
+        .commitment-text {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--brand-color);
+            letter-spacing: 1px;
+        }
+        
+        .cover-image {
+            flex-grow: 1;
+            margin: 0 40px;
+            margin-bottom: 80px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            min-height: 300px;
+        }
+        
+        .cover-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .default-image {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--brand-color) 0%, var(--brand-color) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            min-height: 300px;
+        }
+        
+        .default-content h2 {
+            font-size: 28px;
+            margin: 0 0 10px 0;
+        }
+        
+        .default-content p {
+            font-size: 16px;
+            margin: 0;
+        }
+        
+        .cover-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            background: rgba(255, 255, 255, 0.8);
+            margin-top: auto;
+        }
+        
+        .website {
+            font-size: 16px;
+            color: var(--brand-color);
+            font-weight: bold;
+        }
+        
+        .store-info {
+            font-size: 14px;
+            color: #666;
+            background: #f8f9fa;
+            padding: 5px 10px;
+            border-radius: 10px;
+        }
+        
+        .page-separator {
+            height: 40px;
+            background: var(--brand-color);
+            margin: 0;
+        }
+        
+        .info-section {
+            margin: 25px 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border-left: 5px solid var(--brand-color);
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .info-section h3 {
+            color: var(--brand-color);
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--brand-color);
+            padding-bottom: 8px;
+        }
+        
+        .info-item {
+            margin: 8px 0;
+            padding: 5px 0;
+        }
+        
+        .info-item strong {
+            color: var(--brand-color);
+            min-width: 120px;
+            display: inline-block;
+        }
+        
+        .service-item {
+            margin: 25px 40px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        .service-item h4 {
+            color: var(--brand-color);
+            margin-bottom: 15px;
+            font-size: 20px;
+            font-weight: 600;
+            border-bottom: 2px solid var(--brand-color);
+            padding-bottom: 8px;
+        }
+        
+        .service-image {
+            max-width: 250px;
+            height: auto;
+            margin: 15px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .service-gallery {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .service-gallery h5 {
+            color: var(--brand-color);
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .gallery-grid {
+            display: block;
+        }
+        
+        .gallery-item {
+            text-align: center;
+            width: calc(25% - 7.5px);
+            display: inline-block;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            vertical-align: top;
+        }
+        
+        .gallery-item img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        
+        .gallery-item .caption {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+            padding: 0 5px;
+        }
+        
+        .evidence-gallery {
+            margin-top: 15px;
+        }
+        
+        .evidence-item {
+            background: #ffffff;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .evidence-header h5 {
+            color: var(--brand-color);
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        .evidence-image img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .evidence-description {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 3px solid var(--brand-color);
+            margin-top: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            font-style: italic;
+        }
+        
+        .table {
+            width: calc(100% - 80px);
+            border-collapse: collapse;
+            margin: 25px 40px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .table th, .table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .table th {
+            background: var(--brand-color);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .totals {
+            text-align: right;
+            margin: 30px 40px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            border-left: 5px solid var(--brand-color);
+        }
+        
+        .totals > div {
+            margin: 8px 0;
+            font-size: 16px;
+        }
+        
+        .total-final {
+            font-weight: bold;
+            color: var(--brand-color);
+            font-size: 24px;
+            padding: 10px;
+            background: var(--brand-color);
+            color: white !important;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        
+        .advance-payment {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .footer-section {
+            text-align: center;
+            margin: 40px 40px 0 40px;
+            padding: 30px;
+            background: var(--brand-color);
+            color: white;
+            border-radius: 8px;
+        }
+        
+        .preview-container h3 {
+            margin-left: 40px;
+            margin-right: 40px;
+            color: var(--brand-color);
+            border-bottom: 2px solid var(--brand-color);
+            padding-bottom: 8px;
+        }
+        
+        .footer-section h3 {
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        
+        .social-links a {
+            color: white;
+            text-decoration: none;
+            margin: 0 10px;
+            padding: 8px 15px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+        }
+    </style>
 </head>
-<body data-quotation-number="{{ quotation.quotation_number }}">
-    <!-- PORTADA -->
-    <div class="cover-page">
-        <!-- Header con logo y fecha -->
-        <div class="cover-header">
-            <div class="cover-logo">
-                {% if company_logo_url %}
-                    <img src="{{ company_logo_url }}" alt="{{ company_profile.name }}">
-                {% endif %}
-            </div>
-            <div class="cover-date">
-                <div class="date-month">{{ quotation.quotation_date|date:"F"|upper }}</div>
-                <div class="date-year">{{ quotation.quotation_date|date:"Y" }}</div>
-            </div>
-        </div>
-
-        <!-- Título principal -->
-        <div class="cover-title">
-            <h1>Cotización: <span class="quote-number">{{ quotation.quotation_number }}</span></h1>
-            <div class="cover-subtitle">
-                {% if quotation.items.all %}
-                    {% for item in quotation.items.all %}
-                        {{ item.service.category.name|default:item.service.name }}{% if not forloop.last %}-{% endif %}
-                    {% endfor %}
-                {% else %}
-                    Riego-Pasto-Paisajismo-Iluminación
-                {% endif %}
-            </div>
-        </div>
-
-        <!-- Banda de compromiso -->
-        <div class="commitment-banner">
-            <div class="commitment-text">{{ company_slogan }}</div>
-        </div>
-
-        <!-- Imagen principal -->
-        <div class="cover-image">
-            {% if company_cover_image_url %}
-                <img src="{{ company_cover_image_url }}" alt="Imagen de portada - {{ company_profile.name }}">
-            {% elif items_with_urls.0.display_image_url %}
-                <img src="{{ items_with_urls.0.display_image_url }}" alt="Jardín">
-            {% else %}
-                <!-- Imagen por defecto si no hay imagen de portada ni del servicio -->
-                <div class="default-image">
-                    <div class="default-content">
-                        <h2>{{ company_profile.name|default:"Total Garden & Pool" }}</h2>
-                        <p>Servicios de Jardinería y Paisajismo</p>
-                    </div>
+<body>
+    <div class="preview-container">
+        <!-- PORTADA -->
+        <div class="cover-page">
+            <!-- Header con logo y fecha -->
+            <div class="cover-header">
+                <div class="cover-logo">
+                    {% if company_logo_url %}
+                        <img src="{{ company_logo_url }}" alt="{{ company_profile.name }}">
+                    {% endif %}
                 </div>
-            {% endif %}
-        </div>
-
-        <!-- Footer con website -->
-        <div class="cover-footer">
-            <div class="website">
-                {% if company_profile.website %}
-                    {{ company_profile.website }}
-                {% else %}
-                    www.totalgarden.com.mx
-                {% endif %}
+                <div class="cover-date">
+                    <div class="date-month">{{ quotation.quotation_date|date:"F"|upper }}</div>
+                    <div class="date-year">{{ quotation.quotation_date|date:"Y" }}</div>
+                </div>
             </div>
-            <div class="store-info">@store on line</div>
-        </div>
-    </div>
 
-    <!-- NUEVA PÁGINA - INFORMACIÓN DETALLADA -->
-    <div class="page-break"></div>
-    
-    <!-- INFORMACIÓN CORPORATIVA -->
-    <div class="company-info">
-        <h2>Información de la Empresa</h2>
-        <p><strong>Dirección:</strong><br>{{ company_profile.address|default:quotation.company_address }}</p>
-        {% if company_profile.phone %}
-            <p><strong>Teléfono:</strong> {{ company_profile.phone }}</p>
-        {% endif %}
-        {% if company_profile.email %}
-            <p><strong>Email:</strong> {{ company_profile.email }}</p>
-        {% endif %}
-        {% if company_profile.website %}
-            <p><strong>Sitio Web:</strong> {{ company_profile.website }}</p>
-        {% endif %}
-    </div>
-
-    <!-- EVIDENCIA FOTOGRÁFICA -->
-    {% if photographic_report %}
-        <div class="photographic-evidence">
-            <h2 style="color: var(--brand-color, #2c5f2d); border-bottom: 2px solid var(--brand-color, #2c5f2d); padding-bottom: 10px; margin-bottom: 20px;">
-                Evidencia Fotográfica
-            </h2>
-            
-            <div class="evidence-gallery">
-                {% for photo in photographic_report %}
-                    <div class="evidence-item" style="margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background: #f8f9fa;">
-                        <div class="evidence-header" style="margin-bottom: 10px;">
-                            <h4 style="color: var(--brand-color, #2c5f2d); margin: 0; font-size: 16px;">
-                                {{ photo.display_title }}
-                            </h4>
-                            <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                <span style="background: var(--brand-color, #2c5f2d); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
-                                    {{ photo.get_photo_type_display }}
-                                </span>
-                                {% if photo.location_description %}
-                                    <span style="margin-left: 10px;">📍 {{ photo.location_description }}</span>
-                                {% endif %}
-                                <span style="margin-left: 10px;">📅 {{ photo.photo_date|date:"d/m/Y" }}</span>
-                            </div>
-                        </div>
-                        
-                        <div class="evidence-image" style="text-align: center; margin: 15px 0;">
-                            <img src="{{ photo.image_url }}" alt="{{ photo.display_title }}" 
-                                 style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        </div>
-                        
-                        {% if photo.description %}
-                            <div class="evidence-description" style="margin-top: 10px; font-size: 14px; color: #555;">
-                                <strong>Descripción:</strong> {{ photo.description }}
-                            </div>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-    {% endif %}
-
-    <!-- INFORMACIÓN DE LA COTIZACIÓN -->
-    <div class="quotation-info">
-        <div style="display: flex; justify-content: space-between;">
-            <div>
-                <h3>Información de la Cotización</h3>
-                <p><strong>Número:</strong> {{ quotation.quotation_number }}</p>
-                <p><strong>Fecha:</strong> {{ quotation.quotation_date|date:"d/m/Y" }}</p>
-                <p><strong>Válida hasta:</strong> {{ quotation.expiration_date|date:"d/m/Y" }}</p>
-                <p><strong>Estado:</strong> {{ quotation.get_status_display }}</p>
-                
-                {% if quotation.salesperson %}
-                    <h3 style="margin-top: 20px;">Vendedor Asignado</h3>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        {% if quotation.salesperson.profile_photo %}
-                            <img src="{{ salesperson_photo_url }}" alt="{{ quotation.salesperson.full_name }}" 
-                                 style="width: 50px; height: 50px; border-radius: 50%; object-fit: cover; border: 2px solid #2c5f2d;">
-                        {% endif %}
-                        <div>
-                            <p><strong>{{ quotation.salesperson.full_name }}</strong></p>
-                            {% if quotation.salesperson.email %}
-                                <p style="font-size: 0.9em;">{{ quotation.salesperson.email }}</p>
-                            {% endif %}
-                            {% if quotation.salesperson.phone %}
-                                <p style="font-size: 0.9em;">{{ quotation.salesperson.phone }}</p>
-                            {% endif %}
-                        </div>
-                    </div>
-                {% endif %}
-            </div>
-            <div>
-                <h3>Información del Cliente</h3>
-                <p><strong>{{ quotation.client.name }}</strong></p>
-                {% if quotation.client.email %}
-                    <p>{{ quotation.client.email }}</p>
-                {% endif %}
-                {% if quotation.client.phone %}
-                    <p>{{ quotation.client.phone }}</p>
-                {% endif %}
-                {% if quotation.client.address %}
-                    <p>{{ quotation.client.address }}</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- DETALLE DE SERVICIOS CON FOTOS -->
-    {% for item_data in items_with_urls %}
-        <div class="service-section">
-            <div class="service-header">
-                <h3>{{ item_data.item.service.name }}</h3>
-                {% if item_data.item.service.category %}
-                    <p>Categoría: {{ item_data.item.service.category.name }}</p>
-                {% endif %}
-            </div>
-            
-            <div class="service-content">
-                {% if item_data.display_image_url %}
-                    <div class="service-image">
-                        <img src="{{ item_data.display_image_url }}" alt="{{ item_data.item.service.name }}">
-                    </div>
-                {% endif %}
-                
-                <div class="service-description">
-                    <p><strong>Descripción:</strong></p>
-                    <p>{{ item_data.item.display_description|linebreaks }}</p>
-                    
-                    <p><strong>Cantidad:</strong> {{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</p>
-                    <p><strong>Precio unitario:</strong> {{ item_data.item.unit_price|currency_format:currency_symbol }}</p>
-                    
-                    {% if item_data.item.service.notes %}
-                        <p><strong>Notas:</strong></p>
-                        <p>{{ item_data.item.service.notes|linebreaks }}</p>
+            <!-- Título principal -->
+            <div class="cover-title">
+                <h1>Cotización: <span class="quote-number">{{ quotation.quotation_number }}</span></h1>
+                <div class="cover-subtitle">
+                    {% if quotation.items.all %}
+                        {% for item in quotation.items.all %}
+                            {{ item.service.category.name|default:item.service.name }}{% if not forloop.last %}-{% endif %}
+                        {% endfor %}
+                    {% else %}
+                        Riego-Pasto-Paisajismo-Iluminación
                     {% endif %}
                 </div>
             </div>
 
-            <!-- Galería de fotos del servicio -->
-            {% if item_data.service_images %}
-                <div class="service-gallery">
-                    <h5>Galería de Fotos del Servicio</h5>
-                    <div class="gallery-grid">
-                        {% for image in item_data.service_images %}
-                            <div class="gallery-item">
-                                <img src="{{ image.url }}" alt="{{ image.caption }}">
-                                {% if image.caption %}
-                                    <div class="caption">{{ image.caption }}</div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
+            <!-- Banda de compromiso -->
+            <div class="commitment-banner">
+                <div class="commitment-text">{{ company_slogan }}</div>
+            </div>
+
+            <!-- Imagen principal -->
+            <div class="cover-image">
+                {% if company_cover_image_url %}
+                    <img src="{{ company_cover_image_url }}" alt="Imagen de portada - {{ company_profile.name }}">
+                {% elif items_with_urls.0.display_image_url %}
+                    <img src="{{ items_with_urls.0.display_image_url }}" alt="Jardín">
+                {% else %}
+                    <!-- Imagen por defecto si no hay imagen de portada ni del servicio -->
+                    <div class="default-image">
+                        <div class="default-content">
+                            <h2>{{ company_profile.name|default:"Total Garden & Pool" }}</h2>
+                            <p>Servicios de Jardinería y Paisajismo</p>
+                        </div>
                     </div>
+                {% endif %}
+            </div>
+
+            <!-- Footer con website -->
+            <div class="cover-footer">
+                <div class="website">
+                    {% if company_profile.website %}
+                        {{ company_profile.website }}
+                    {% else %}
+                        www.totalgarden.com.mx
+                    {% endif %}
                 </div>
-            {% endif %}
-        </div>
-    {% endfor %}
-
-    <!-- TABLA RESUMEN DE PRODUCTOS -->
-    <div class="page-break"></div>
-    <h2 style="color: #2c5f2d; border-bottom: 2px solid #2c5f2d; padding-bottom: 10px;">
-        Resumen de Productos y Servicios
-    </h2>
-    
-    <table class="items-table">
-        <thead>
-            <tr>
-                <th>Descripción</th>
-                <th>Cantidad</th>
-                <th>Precio Unit.</th>
-                <th>Subtotal</th>
-                                 <th>IVA</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item_data in items_with_urls %}
-                <tr>
-                    <td>
-                        <strong>{{ item_data.item.service.name }}</strong>
-                        {% if item_data.item.service.category %}
-                            <br><small>{{ item_data.item.service.category.name }}</small>
-                        {% endif %}
-                    </td>
-                    <td>{{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</td>
-                    <td class="text-right">{{ item_data.item.unit_price|currency_format:currency_symbol }}</td>
-                    <td class="text-right">{{ item_data.item.subtotal|currency_format:currency_symbol }}</td>
-                    <td class="text-right">{{ item_data.item.tax_amount|currency_format:currency_symbol }}</td>
-                    <td class="text-right">{{ item_data.item.total_amount|currency_format:currency_symbol }}</td>
-                </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <!-- TOTALES -->
-    <div class="totals-section">
-        <table class="totals-table">
-            <tr>
-                <td><strong>Subtotal:</strong></td>
-                <td class="text-right">{{ quotation.subtotal|currency_format:currency_symbol }}</td>
-            </tr>
-            <tr>
-                <td><strong>IVA:</strong></td>
-                <td class="text-right">{{ quotation.tax_amount|currency_format:currency_symbol }}</td>
-            </tr>
-            <tr class="total-final">
-                <td><strong>TOTAL:</strong></td>
-                <td class="text-right"><strong>{{ quotation.total_amount|currency_format:currency_symbol }}</strong></td>
-            </tr>
-        </table>
-        
-        <div style="margin-top: 20px;">
-            <p><strong>Anticipo (60%):</strong> {{ quotation.get_advance_payment|currency_format:currency_symbol }}</p>
-            <p><strong>Saldo (40%):</strong> {{ quotation.get_balance_payment|currency_format:currency_symbol }}</p>
-        </div>
-    </div>
-
-    <!-- TÉRMINOS Y CONDICIONES -->
-    <div class="terms-section">
-        <h2>Términos de Pago</h2>
-        <div class="terms-content">
-            {{ quotation.payment_terms|default:"Anticipo del 60% para la programación de los trabajos. Saldo del 40% al término de los mismos." }}
-        </div>
-        
-        {% if quotation.terms_and_conditions %}
-            <h2>Términos y Condiciones</h2>
-            <div class="terms-content">
-                {{ quotation.terms_and_conditions }}
+                <div class="store-info">@store on line</div>
             </div>
-        {% endif %}
+        </div>
         
-        {% if quotation.notes %}
-            <h2>Notas Adicionales</h2>
-            <div class="terms-content">
-                {{ quotation.notes|linebreaks }}
-            </div>
-        {% endif %}
-    </div>
-
-    <!-- PÁGINA DE AGRADECIMIENTO Y REDES SOCIALES -->
-    <div class="social-footer">
-        <h1>¡Gracias por su Confianza!</h1>
-        <p style="font-size: 1.2em; margin: 20px 0;">
-            Apreciamos la oportunidad de servirle y esperamos trabajar juntos en su proyecto.
-        </p>
-        
-        <p style="margin: 30px 0;">
-            Para cualquier duda o aclaración, no dude en contactarnos.
-        </p>
-        
-        <div style="margin: 30px 0;">
-            <h3>Información de Contacto</h3>
-            <p>{{ company_profile.address|default:quotation.company_address }}</p>
+        <!-- SEPARADOR -->
+        <div class="page-separator"></div>
+        <!-- INFORMACIÓN DE LA EMPRESA -->
+        <div class="info-section">
+            <h3>Información de la Empresa</h3>
+            <div class="info-item"><strong>Dirección:</strong> {{ company_profile.address|default:quotation.company_address }}</div>
             {% if company_profile.phone %}
-                <p>Teléfono: {{ company_profile.phone }}</p>
+                <div class="info-item"><strong>Teléfono:</strong> {{ company_profile.phone }}</div>
             {% endif %}
             {% if company_profile.email %}
-                <p>Email: {{ company_profile.email }}</p>
-            {% endif %}
-        </div>
-        
-        <div class="social-links">
-            <h3>Síguenos en Redes Sociales</h3>
-            {% if company_profile.facebook_url %}
-                <a href="{{ company_profile.facebook_url }}">Facebook</a>
-            {% endif %}
-            {% if company_profile.instagram_url %}
-                <a href="{{ company_profile.instagram_url }}">Instagram</a>
-            {% endif %}
-            {% if company_profile.tiktok_url %}
-                <a href="{{ company_profile.tiktok_url }}">TikTok</a>
+                <div class="info-item"><strong>Email:</strong> {{ company_profile.email }}</div>
             {% endif %}
             {% if company_profile.website %}
-                <a href="{{ company_profile.website }}">Sitio Web</a>
+                <div class="info-item"><strong>Sitio Web:</strong> {{ company_profile.website }}</div>
             {% endif %}
         </div>
-        
-        <p style="margin-top: 30px; font-size: 0.9em;">
-            Cotización generada el {{ "now"|date:"d/m/Y H:i" }}
-        </p>
+
+        <!-- EVIDENCIA FOTOGRÁFICA -->
+        {% if photographic_report %}
+            <div class="info-section">
+                <h3>Evidencia Fotográfica</h3>
+                <div class="evidence-gallery" style="display: block;">
+                    {% for photo in photographic_report %}
+                        <div class="evidence-item" style="display: inline-block; width: calc(50% - 10px); margin-right: 20px; margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff; vertical-align: top;">
+                            <div class="evidence-header" style="margin-bottom: 10px;">
+                                <h5 style="color: var(--brand-color); margin: 0; font-size: 16px;">
+                                    {{ photo.display_title }}
+                                </h5>
+                                <div style="font-size: 12px; color: #666; margin-top: 5px;">
+                                    <span style="background: var(--brand-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
+                                        {{ photo.get_photo_type_display }}
+                                    </span>
+                                    {% if photo.location_description %}
+                                        <span style="margin-left: 10px;">📍 {{ photo.location_description }}</span>
+                                    {% endif %}
+                                    <span style="margin-left: 10px;">📅 {{ photo.photo_date|date:"d/m/Y" }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="evidence-image" style="text-align: center; margin: 15px 0;">
+                                <img src="{{ photo.image_url }}" alt="{{ photo.display_title }}" 
+                                     style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                            </div>
+                            
+                            {% if photo.description %}
+                                <div class="evidence-description" style="margin-top: 10px; font-size: 14px; color: #555;">
+                                    <strong>Descripción:</strong> {{ photo.description }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- INFORMACIÓN DEL CLIENTE -->
+        <div class="info-section">
+            <h3>Información del Cliente</h3>
+            <div class="info-item"><strong>Cliente:</strong> {{ quotation.client.name }}</div>
+            {% if quotation.client.email %}
+                <div class="info-item"><strong>Email:</strong> {{ quotation.client.email }}</div>
+            {% endif %}
+            {% if quotation.client.phone %}
+                <div class="info-item"><strong>Teléfono:</strong> {{ quotation.client.phone }}</div>
+            {% endif %}
+            {% if quotation.client.address %}
+                <div class="info-item"><strong>Dirección:</strong> {{ quotation.client.address }}</div>
+            {% endif %}
+        </div>
+
+        <!-- DETALLES DE LA COTIZACIÓN -->
+        <div class="info-section">
+            <h3>Detalles de la Cotización</h3>
+            <div class="info-item"><strong>Fecha:</strong> {{ quotation.quotation_date|date:"d/m/Y" }}</div>
+            <div class="info-item"><strong>Válida hasta:</strong> {{ quotation.expiration_date|date:"d/m/Y" }}</div>
+            <div class="info-item"><strong>Estado:</strong> {{ quotation.get_status_display }}</div>
+        </div>
+
+        <!-- SERVICIOS -->
+        <h3>Servicios Cotizados</h3>
+        {% for item_data in items_with_urls %}
+            <div class="service-item">
+                <h4>{{ item_data.item.service.name }}</h4>
+                {% if item_data.item.service.category %}
+                    <p><strong>Categoría:</strong> {{ item_data.item.service.category.name }}</p>
+                {% endif %}
+                
+                {% if item_data.display_image_url %}
+                    <img src="{{ item_data.display_image_url }}" alt="{{ item_data.item.service.name }}" class="service-image">
+                {% endif %}
+                
+                <p><strong>Descripción:</strong></p>
+                <p>{{ item_data.item.display_description|linebreaks }}</p>
+                
+                <p><strong>Cantidad:</strong> {{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</p>
+                <p><strong>Precio unitario:</strong> {{ item_data.item.unit_price|currency_format }}</p>
+                <p><strong>Total:</strong> {{ item_data.item.total_amount|currency_format }}</p>
+                
+                {% if item_data.item.service.notes %}
+                    <p><strong>Notas:</strong></p>
+                    <p>{{ item_data.item.service.notes|linebreaks }}</p>
+                {% endif %}
+                
+                <!-- Galería de fotos del servicio -->
+                {% if item_data.service_images %}
+                    <div class="service-gallery">
+                        <h5><i class="bi bi-images"></i> Galería de Fotos del Servicio</h5>
+                        <div class="gallery-grid">
+                            {% for image in item_data.service_images %}
+                                <div class="gallery-item">
+                                    <img src="{{ image.url }}" alt="{{ image.caption }}" title="{{ image.caption }}">
+                                    {% if image.caption %}
+                                        <div class="caption">{{ image.caption }}</div>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        {% endfor %}
+
+        <!-- TABLA RESUMEN -->
+        <h3>Resumen de la Cotización</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Descripción</th>
+                    <th>Cantidad</th>
+                    <th>Precio Unitario</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item_data in items_with_urls %}
+                    <tr>
+                        <td>{{ item_data.item.service.name }}</td>
+                        <td>{{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</td>
+                        <td>{{ item_data.item.unit_price|currency_format }}</td>
+                        <td>{{ item_data.item.total_amount|currency_format }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- TOTALES -->
+        <div class="totals">
+            <div>Subtotal: {{ quotation.subtotal|currency_format }}</div>
+            <div>IVA: {{ quotation.tax_amount|currency_format }}</div>
+            <div class="total-final">TOTAL: {{ quotation.total_amount|currency_format }}</div>
+            <div class="advance-payment">
+                <div>Anticipo (60%): {{ quotation.get_advance_payment|currency_format }}</div>
+                <div>Saldo (40%): {{ quotation.get_balance_payment|currency_format }}</div>
+            </div>
+        </div>
+
+        <!-- TÉRMINOS Y CONDICIONES -->
+        <div class="info-section">
+            <h3>Términos de Pago</h3>
+            <p>{{ quotation.payment_terms|default:"Anticipo del 60% para la programación de los trabajos. Saldo del 40% al término de los mismos." }}</p>
+            
+            {% if quotation.terms_and_conditions %}
+                <h3>Términos y Condiciones</h3>
+                <p>{{ quotation.terms_and_conditions|linebreaks }}</p>
+            {% endif %}
+            
+            {% if quotation.notes %}
+                <h3>Notas Adicionales</h3>
+                <p>{{ quotation.notes|linebreaks }}</p>
+            {% endif %}
+        </div>
+
+        <!-- FOOTER -->
+        <div class="footer-section">
+            <h3>¡Gracias por su confianza!</h3>
+            <p>Esperamos trabajar con usted en su proyecto y brindarle el mejor servicio.</p>
+            
+            <div class="social-links">
+                {% if company_profile.facebook_url %}
+                    <a href="{{ company_profile.facebook_url }}" target="_blank">
+                        <i class="bi bi-facebook"></i> Facebook
+                    </a>
+                {% endif %}
+                {% if company_profile.instagram_url %}
+                    <a href="{{ company_profile.instagram_url }}" target="_blank">
+                        <i class="bi bi-instagram"></i> Instagram
+                    </a>
+                {% endif %}
+                {% if company_profile.linkedin_url %}
+                    <a href="{{ company_profile.linkedin_url }}" target="_blank">
+                        <i class="bi bi-linkedin"></i> LinkedIn
+                    </a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </body>
 </html> 

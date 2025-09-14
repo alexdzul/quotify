@@ -1,5 +1,8 @@
 {% extends 'base/base.html' %}
 
+{% load static %}
+{% load system_tags %}
+
 {% block title %}{{ quotation.quotation_number }} - Quotify{% endblock %}
 
 {% block breadcrumb %}
@@ -101,7 +104,7 @@
                         <p><strong>Fecha de Cotización:</strong> {{ quotation.quotation_date|date:"d/m/Y" }}</p>
                         <p><strong>Fecha de Expiración:</strong> {{ quotation.expiration_date|date:"d/m/Y" }}</p>
                         <p><strong>Estado:</strong> {{ quotation.get_status_display }}</p>
-                        <p><strong>Total:</strong> <span class="h5 text-primary">${{ quotation.total_amount|floatformat:2 }}</span></p>
+                        <p><strong>Total:</strong> <span class="h5 text-primary">{{ quotation.total_amount|currency_format }}</span></p>
                     </div>
                 </div>
                 {% if quotation.notes %}
@@ -161,14 +164,14 @@
                                         {{ item.quantity|floatformat:2 }}
                                         <small class="text-muted">{{ item.service.unit }}</small>
                                     </td>
-                                    <td class="text-end">${{ item.unit_price|floatformat:2 }}</td>
-                                    <td class="text-end">${{ item.subtotal|floatformat:2 }}</td>
+                                    <td class="text-end">{{ item.unit_price|currency_format }}</td>
+                                    <td class="text-end">{{ item.subtotal|currency_format }}</td>
                                     <td class="text-end">
-                                        ${{ item.tax_amount|floatformat:2 }}
+                                        {{ item.tax_amount|currency_format }}
                                         <br><small class="text-muted">({{ item.tax_rate }}%)</small>
                                     </td>
                                     <td class="text-end">
-                                        <strong class="text-success">${{ item.total_amount|floatformat:2 }}</strong>
+                                        <strong class="text-success">{{ item.total_amount|currency_format }}</strong>
                                     </td>
                                     <td class="text-center">
                                         <div class="dropdown">
@@ -196,10 +199,10 @@
                             <tfoot class="table-light">
                                 <tr>
                                     <th colspan="3" class="text-end">Subtotal:</th>
-                                    <th class="text-end">${{ quotation.subtotal|floatformat:2 }}</th>
-                                    <th class="text-end">${{ quotation.tax_amount|floatformat:2 }}</th>
+                                    <th class="text-end">{{ quotation.subtotal|currency_format }}</th>
+                                    <th class="text-end">{{ quotation.tax_amount|currency_format }}</th>
                                     <th class="text-end text-success">
-                                        <strong>${{ quotation.total_amount|floatformat:2 }}</strong>
+                                        <strong>{{ quotation.total_amount|currency_format }}</strong>
                                     </th>
                                     <th></th>
                                 </tr>
@@ -215,16 +218,16 @@
                                     <h6 class="card-title">Resumen de Pagos</h6>
                                     <div class="d-flex justify-content-between">
                                         <span>Anticipo (60%):</span>
-                                        <strong class="text-success">${{ quotation.get_advance_payment|floatformat:2 }}</strong>
+                                        <strong class="text-success">{{ quotation.get_advance_payment|currency_format }}</strong>
                                     </div>
                                     <div class="d-flex justify-content-between">
                                         <span>Saldo (40%):</span>
-                                        <strong class="text-info">${{ quotation.get_balance_payment|floatformat:2 }}</strong>
+                                        <strong class="text-info">{{ quotation.get_balance_payment|currency_format }}</strong>
                                     </div>
                                     <hr>
                                     <div class="d-flex justify-content-between">
                                         <strong>Total:</strong>
-                                        <strong class="text-primary">${{ quotation.total_amount|floatformat:2 }}</strong>
+                                        <strong class="text-primary">{{ quotation.total_amount|currency_format }}</strong>
                                     </div>
                                 </div>
                             </div>

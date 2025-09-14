@@ -1,5 +1,8 @@
 {% extends 'base/base.html' %}
 
+{% load static %}
+{% load system_tags %}
+
 {% block title %}Preview Cotización {{ quotation.quotation_number }} - Quotify{% endblock %}
 
 {% block extra_css %}
@@ -552,9 +555,9 @@
     {% if photographic_report %}
         <div class="info-section">
             <h3>Evidencia Fotográfica</h3>
-            <div class="evidence-gallery">
+            <div class="evidence-gallery" style="display: flex; flex-wrap: wrap; gap: 20px;">
                 {% for photo in photographic_report %}
-                    <div class="evidence-item" style="margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff;">
+                    <div class="evidence-item" style="flex: 0 0 calc(50% - 10px); margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff;">
                         <div class="evidence-header" style="margin-bottom: 10px;">
                             <h5 style="color: var(--brand-color); margin: 0; font-size: 16px;">
                                 {{ photo.display_title }}
@@ -626,8 +629,8 @@
             <p>{{ item_data.item.display_description|linebreaks }}</p>
             
             <p><strong>Cantidad:</strong> {{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</p>
-            <p><strong>Precio unitario:</strong> ${{ item_data.item.unit_price|floatformat:2 }}</p>
-            <p><strong>Total:</strong> ${{ item_data.item.total_amount|floatformat:2 }}</p>
+            <p><strong>Precio unitario:</strong> {{ item_data.item.unit_price|currency_format }}</p>
+            <p><strong>Total:</strong> {{ item_data.item.total_amount|currency_format }}</p>
             
             {% if item_data.item.service.notes %}
                 <p><strong>Notas:</strong></p>
@@ -669,8 +672,8 @@
                 <tr>
                     <td>{{ item_data.item.service.name }}</td>
                     <td>{{ item_data.item.quantity }} {{ item_data.item.service.unit|default:"unidad(es)" }}</td>
-                    <td>${{ item_data.item.unit_price|floatformat:2 }}</td>
-                    <td>${{ item_data.item.total_amount|floatformat:2 }}</td>
+                    <td>{{ item_data.item.unit_price|currency_format }}</td>
+                    <td>{{ item_data.item.total_amount|currency_format }}</td>
                 </tr>
             {% endfor %}
         </tbody>
@@ -678,12 +681,12 @@
 
     <!-- TOTALES -->
     <div class="totals">
-        <div>Subtotal: ${{ quotation.subtotal|floatformat:2 }}</div>
-        <div>IVA: ${{ quotation.tax_amount|floatformat:2 }}</div>
-        <div class="total-final">TOTAL: ${{ quotation.total_amount|floatformat:2 }}</div>
+        <div>Subtotal: {{ quotation.subtotal|currency_format }}</div>
+        <div>IVA: {{ quotation.tax_amount|currency_format }}</div>
+        <div class="total-final">TOTAL: {{ quotation.total_amount|currency_format }}</div>
         <div class="advance-payment">
-            <div>Anticipo (60%): ${{ quotation.get_advance_payment|floatformat:2 }}</div>
-            <div>Saldo (40%): ${{ quotation.get_balance_payment|floatformat:2 }}</div>
+            <div>Anticipo (60%): {{ quotation.get_advance_payment|currency_format }}</div>
+            <div>Saldo (40%): {{ quotation.get_balance_payment|currency_format }}</div>
         </div>
     </div>
 
