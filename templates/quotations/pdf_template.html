@@ -509,25 +509,29 @@
                 <h3>Evidencia Fotográfica</h3>
                 <div class="evidence-gallery" style="display: block;">
                     {% for photo in photographic_report %}
-                        <div class="evidence-item" style="display: inline-block; width: calc(50% - 10px); margin-right: 20px; margin-bottom: 25px; padding: 15px; border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff; vertical-align: top;">
-                            <div class="evidence-header" style="margin-bottom: 10px;">
-                                <h5 style="color: var(--brand-color); margin: 0; font-size: 16px;">
+                        {% if forloop.counter0|divisibleby:2 %}
+                            <div class="evidence-item" style="float: left; width: calc(50% - 10px); margin-right: 20px; margin-bottom: 25px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff;">
+                        {% else %}
+                            <div class="evidence-item" style="float: right; width: calc(50% - 10px); margin-bottom: 25px; padding: 10px; border: 1px solid #e9ecef; border-radius: 8px; background: #ffffff;">
+                        {% endif %}
+                            <div class="evidence-header" style="margin-bottom: 8px;">
+                                <h5 style="color: var(--brand-color); margin: 0; font-size: 14px;">
                                     {{ photo.display_title }}
                                 </h5>
-                                <div style="font-size: 12px; color: #666; margin-top: 5px;">
-                                    <span style="background: var(--brand-color); color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px;">
+                                <div style="font-size: 10px; color: #666; margin-top: 3px;">
+                                    <span style="background: var(--brand-color); color: white; padding: 1px 6px; border-radius: 8px; font-size: 9px;">
                                         {{ photo.get_photo_type_display }}
                                     </span>
                                     {% if photo.location_description %}
-                                        <span style="margin-left: 10px;">📍 {{ photo.location_description }}</span>
+                                        <span style="margin-left: 8px;">📍 {{ photo.location_description }}</span>
                                     {% endif %}
-                                    <span style="margin-left: 10px;">📅 {{ photo.photo_date|date:"d/m/Y" }}</span>
+                                    <span style="margin-left: 8px;">📅 {{ photo.photo_date|date:"d/m/Y" }}</span>
                                 </div>
                             </div>
                             
-                            <div class="evidence-image" style="text-align: center; margin: 15px 0;">
+                            <div class="evidence-image" style="text-align: center; margin: 10px 0;">
                                 <img src="{{ photo.image_url }}" alt="{{ photo.display_title }}" 
-                                     style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                     style="max-width: 100%; max-height: 200px; height: auto; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);">
                             </div>
                             
                             {% if photo.description %}
@@ -536,7 +540,11 @@
                                 </div>
                             {% endif %}
                         </div>
+                        {% if forloop.counter|divisibleby:2 %}
+                            <div style="clear: both;"></div>
+                        {% endif %}
                     {% endfor %}
+                    <div style="clear: both;"></div>
                 </div>
             </div>
         {% endif %}
