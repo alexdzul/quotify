@@ -1,4 +1,4 @@
-{% load system_tags %}
+{% load static system_tags %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -11,6 +11,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     
     <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/responsive-improvements.css' %}">
     <style>
         :root {
             --primary-color: #0d6efd;
@@ -196,10 +197,11 @@
         }
         
         /* Responsive - Móviles */
-        @media (max-width: 768px) {
+        @media (max-width: 767.98px) {
             .sidebar {
                 transform: translateX(-100%);
                 transition: transform 0.3s ease-in-out;
+                width: 280px; /* Más ancho para mejor usabilidad */
             }
             
             .sidebar.show {
@@ -208,18 +210,19 @@
             
             .main-content {
                 margin-left: 0;
-                padding: 1rem;
+                padding: 0.75rem; /* Más compacto */
             }
             
             .sidebar-overlay {
                 display: none;
                 position: fixed;
-                top: var(--navbar-height);
+                top: 56px; /* Altura navbar móvil */
                 left: 0;
                 width: 100%;
-                height: calc(100vh - var(--navbar-height));
-                background-color: rgba(0, 0, 0, 0.5);
-                z-index: 1019;
+                height: calc(100vh - 56px);
+                background-color: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(2px);
+                z-index: 1039;
             }
             
             .sidebar-overlay.show {
@@ -229,16 +232,30 @@
         
         @media (max-width: 991.98px) {
             .main-content {
-                padding: 1.5rem;
+                padding: 1.25rem;
             }
             
             /* Ajustar el texto del brand en móvil */
             .navbar-brand {
-                font-size: 1.2rem;
+                font-size: 1.1rem;
             }
         }
         
-        @media (min-width: 769px) and (max-width: 991.98px) {
+        /* Tablet pequeño */
+        @media (min-width: 576px) and (max-width: 767.98px) {
+            .sidebar {
+                width: 240px;
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 240px;
+                padding: 1.25rem;
+            }
+        }
+        
+        /* Tablet grande */
+        @media (min-width: 768px) and (max-width: 991.98px) {
             .main-content {
                 margin-left: 0;
             }
@@ -290,17 +307,29 @@
             box-shadow: 0 4px 8px rgba(13, 110, 253, 0.3);
         }
         
-        /* Tablas */
-        .table {
-            border-radius: 0.75rem;
-            overflow: hidden;
+        /* Tablas responsive */
+        .table-responsive {
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
-        .table th {
-            background-color: var(--light-bg);
-            border-top: none;
-            font-weight: 600;
-            color: #495057;
+        .table-responsive::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+        
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
         }
         
         /* Status badges mejorados */
@@ -665,32 +694,45 @@
             const sidebar = document.getElementById('sidebar');
             const overlay = document.querySelector('.sidebar-overlay');
             
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
+            if (sidebar && overlay) {
+                sidebar.classList.toggle('show');
+                overlay.classList.toggle('show');
+                
+                // Prevenir scroll del body cuando sidebar está abierto
+                if (sidebar.classList.contains('show')) {
+                    document.body.style.overflow = 'hidden';
+                } else {
+                    document.body.style.overflow = '';
+                }
+            }
         }
         
         // Cerrar sidebar al hacer clic en un enlace en móvil
         document.querySelectorAll('.sidebar .nav-link').forEach(link => {
             link.addEventListener('click', () => {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 767.98) {
                     toggleSidebar();
+                    document.body.style.overflow = ''; // Restaurar scroll
                 }
             });
         });
         
         // Cerrar sidebar y navbar collapse al redimensionar la ventana
         window.addEventListener('resize', () => {
-            if (window.innerWidth > 768) {
+            if (window.innerWidth > 767.98) {
                 const sidebar = document.getElementById('sidebar');
                 const overlay = document.querySelector('.sidebar-overlay');
-                sidebar.classList.remove('show');
-                overlay.classList.remove('show');
+                if (sidebar && overlay) {
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                    document.body.style.overflow = '';
+                }
             }
             
             // Cerrar navbar collapse en desktop
-            if (window.innerWidth > 991) {
+            if (window.innerWidth > 991.98) {
                 const navbarCollapse = document.getElementById('navbarNav');
-                if (navbarCollapse.classList.contains('show')) {
+                if (navbarCollapse && navbarCollapse.classList.contains('show')) {
                     const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
                         toggle: false
                     });
@@ -702,12 +744,14 @@
         // Cerrar navbar collapse al hacer clic en enlaces en móvil
         document.querySelectorAll('#navbarNav .nav-link').forEach(link => {
             link.addEventListener('click', () => {
-                if (window.innerWidth <= 991) {
+                if (window.innerWidth <= 991.98) {
                     const navbarCollapse = document.getElementById('navbarNav');
-                    const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
-                        toggle: false
-                    });
-                    bsCollapse.hide();
+                    if (navbarCollapse && navbarCollapse.classList.contains('show')) {
+                        const bsCollapse = new bootstrap.Collapse(navbarCollapse, {
+                            toggle: false
+                        });
+                        bsCollapse.hide();
+                    }
                 }
             });
         });
@@ -718,7 +762,7 @@
             if (dropdownToggle) {
                 dropdownToggle.addEventListener('click', function(e) {
                     // En móvil, asegurar que el dropdown se posicione correctamente
-                    if (window.innerWidth <= 991) {
+                    if (window.innerWidth <= 991.98) {
                         setTimeout(() => {
                             const dropdownMenu = this.nextElementSibling;
                             if (dropdownMenu) {
@@ -726,10 +770,28 @@
                                 if (rect.right > window.innerWidth) {
                                     dropdownMenu.classList.add('dropdown-menu-end');
                                 }
+                                
+                                // Asegurar que el dropdown sea visible
+                                if (rect.bottom > window.innerHeight) {
+                                    dropdownMenu.style.maxHeight = `${window.innerHeight - rect.top - 10}px`;
+                                    dropdownMenu.style.overflowY = 'auto';
+                                }
                             }
                         }, 10);
                     }
                 });
+            }
+        });
+        
+        // Mejorar accesibilidad con teclado
+        document.addEventListener('keydown', function(e) {
+            // Cerrar sidebar con Escape
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.querySelector('.sidebar-overlay');
+                if (sidebar && overlay && sidebar.classList.contains('show')) {
+                    toggleSidebar();
+                }
             }
         });
     </script>
